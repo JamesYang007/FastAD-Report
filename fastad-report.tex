@@ -1,0 +1,186 @@
+\documentclass[sigconf,review]{acmart}
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+\setcopyright{acmcopyright}
+\copyrightyear{2018}
+\acmYear{2018}
+\acmDOI{10.1145/1122445.1122456}
+
+%% These commands are for a PROCEEDINGS abstract or paper.
+\acmConference[Woodstock '18]{Woodstock '18: ACM Symposium on Neural
+  Gaze Detection}{June 03--05, 2018}{Woodstock, NY}
+\acmBooktitle{Woodstock '18: ACM Symposium on Neural Gaze Detection,
+  June 03--05, 2018, Woodstock, NY}
+\acmPrice{15.00}
+\acmISBN{978-1-4503-XXXX-X/18/06}
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+%%\citestyle{acmauthoryear}
+
+%%%%%%%% PACKAGES %%%%%%%%
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% \usepackage{fancyhdr}
+% \usepackage[normalem]{ulem}
+% \usepackage{microtype}
+% \usepackage{textcomp}
+% \usepackage{xifthen}
+% \usepackage{soul}
+% \usepackage{tabularx}
+% \usepackage{multirow}
+% \usepackage{graphicx}
+% \usepackage{underscore}
+% \usepackage{subfig}
+% \usepackage{balance}
+% \usepackage{graphicx}
+
+% \usepackage{breakurl}
+% \usepackage{csquotes}
+% \usepackage{booktabs}
+% \usepackage{adjustbox}
+% \usepackage{array}
+% \usepackage{xspace}
+% \usepackage{filecontents}
+% \usepackage{multicol}
+% \PassOptionsToPackage{hyphens}{url}
+% \appto\UrlBreaks{\do\-}
+
+% \usepackage[inline]{enumitem}
+% \setitemize{noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt}
+
+% \usepackage[font=small,labelfont=bf]{caption}
+
+% \usepackage{tikz}
+% \usetikzlibrary{arrows, arrows.meta, automata, positioning, shapes, decorations.pathmorphing, shadows }
+% \newcommand{\tkfig}[1]{\raisebox{-.5 ex}{\tikz{#1}}}
+% \usepackage{xypic} % forward simulation diagram
+% \usepackage[scaled]{beramono}
+% \usepackage[T1]{fontenc}
+
+%%%%%%%% COLOR %%%%%%%%
+\usepackage{color}
+\usepackage{xcolor}
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+\definecolor{myblue}{HTML}{3A849E}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{myorange}{HTML}{B25A00}
+\definecolor{mygreen}{HTML}{467E7E}
+\definecolor{mymauve}{HTML}{AC134D}
+
+\definecolor{backred}   {rgb}{1  ,  0.8,  0.8}
+\definecolor{backgreen} {rgb}{0.8,  1  ,  0.8}
+\definecolor{backblue}  {rgb}{0.8,  0.8,  1}
+
+%%%%%%%% COMMENTS %%%%%%%%
+
+\newcommand{\jae}[1]{\textcolor{orange} {RG: #1}}
+\newcommand{\jhui}[1]{\textcolor{blue} {j-hui: #1}}
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+\newcommand{\cucomment}[1]{}
+
+\newcommand{\code}[1]{{\texttt{\textcolor{mygray}{\small #1}}}}
+
+%%%%%%%% CODE LISTINGS %%%%%%%%
+
+\usepackage{listings}
+\lstdefinestyle{customc}{
+  language=C,
+  basicstyle=\linespread{0.9}\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  keywordstyle=\bfseries\color{mymauve!70},
+  commentstyle=\itshape\color{mygreen},
+  stringstyle=\color{orange},
+  emph = {add0, add1, add2, add3, map_npt, map_page_wrong, map_page,},
+  emphstyle=\bfseries\color{myblue!90},%
+  deletekeywords={get},
+  escapeinside={<@}{@>},
+  keepspaces=true,
+  otherkeywords={64, uint, ...},
+  tabsize=2,
+}
+
+\lstdefinestyle{customasm}{
+  language=C,
+  belowcaptionskip=1\baselineskip,
+  abovecaptionskip=0pt,
+  aboveskip=0pt,
+  %frame=L,
+  xleftmargin=\parindent,
+  %anguage=Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{mygreen},
+  keywordstyle=\bfseries\color{myblue!90},%
+  emphstyle=\bfseries\color{myblue!90},%
+  emph = {ld, st,dmb,cbz,ldax,cbnz,stx,cnbz,str,in},
+  breaklines=true,
+  tabsize=2,
+  boxpos=t,
+  numberstyle=\footnotesize\color{gray}\tt,
+}
+
+
+\begin{document}
+
+\title{Why C++ is better than Java}
+
+\author{James Yang}
+\email{james@gmail.com}
+\orcid{1234-5678-9012}
+\affiliation{%
+  \institution{Institute for Clarity in Documentation}
+  \city{Lake Laogai}
+  \state{New Jersey}
+  \postcode{43017}
+}
+
+\begin{abstract}
+\input{abstract}
+\end{abstract}
+
+\maketitle
+
+\input{tutorial}
+
+\input{introduction}
+
+\input{overview}
+
+\input{background}
+
+\input{fastad}
+
+\input{benchmarks}
+
+\input{related}
+
+\input{conclusion}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\appendix
+\input{appendix}
+
+\end{document}
