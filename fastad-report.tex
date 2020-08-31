@@ -9,6 +9,8 @@
 \usepackage{hyperref} % Hyperlinks
 \renewcommand\UrlFont{\color{blue}\rmfamily}
 
+\usepackage{verbatim} % Verbatim, e.g. \verb|text|
+
 % \usepackage{fancyhdr}
 % \usepackage[normalem]{ulem}
 % \usepackage{microtype}
@@ -62,7 +64,7 @@
 
 %%%%%%%% COMMENTS %%%%%%%%
 
-\newcommand{\jae}[1]{\textcolor{orange} {RG: #1}}
+\newcommand{\jae}[1]{\textcolor{green} {jae: #1}}
 \newcommand{\jhui}[1]{\textcolor{blue} {j-hui: #1}}
 \newcommand{\todo}[1]{\textcolor{red}{#1}}
 \newcommand{\cucomment}[1]{}
@@ -130,8 +132,6 @@
 \keywords{First keyword \and Second keyword \and Another keyword.}
 \end{abstract}
 
-\input{tutorial}
-
 \input{introduction}
 
 \input{overview}
@@ -145,6 +145,8 @@
 \input{related}
 
 \input{conclusion}
+
+\input{tutorial}
 
 \bibliographystyle{splncs04}
 \bibliography{references}
