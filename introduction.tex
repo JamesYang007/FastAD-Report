@@ -1,2 +1,19 @@
 \section{Introduction}
 
+In a wide range of areas such as
+optimization, statistical inference, quantitative finance, and physics,
+the gradient, or total derivative, of a scalar function 
+has proven to be essential when constructing algorithmic solutions to complex problems.
+The simplest example in (convex) optimization is a root-finding algorithm such as Newton-Raphson method,
+which updates a proposal value $x_n$ at every iteration by $-\frac{f(x_n)}{f'(x_n)}$.
+In Bayesian statistics, there has been much development in advanced MCMC algorithms
+such as the Hamiltonian Monte Carlo (HMC) and NUTS (No-U-Turn-Sampler),
+which heavily rely on computing the gradient of 
+a (log) joint probability density function~\cite{hoffman:2011}\cite{neal:2012}.
+Modern neural networks also rely on computing 
+the gradient of a loss function during back-propogation~\cite{goodfellow:2016}.
+
+
+In quantitative finance, 
+
+Often times, the target function to differentiate is quite complicated
