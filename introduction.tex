@@ -1,19 +1,36 @@
 \section{Introduction}
 
-In a wide range of areas such as
-optimization, statistical inference, quantitative finance, and physics,
-the gradient, or total derivative, of a scalar function 
-has proven to be essential when constructing algorithmic solutions to complex problems.
-The simplest example in (convex) optimization is a root-finding algorithm such as Newton-Raphson method,
-which updates a proposal value $x_n$ at every iteration by $-\frac{f(x_n)}{f'(x_n)}$.
-In Bayesian statistics, there has been much development in advanced MCMC algorithms
-such as the Hamiltonian Monte Carlo (HMC) and NUTS (No-U-Turn-Sampler),
-which heavily rely on computing the gradient of 
-a (log) joint probability density function~\cite{hoffman:2011}\cite{neal:2012}.
-Modern neural networks also rely on computing 
-the gradient of a loss function during back-propogation~\cite{goodfellow:2016}.
+In modern computational problems surrounding optimization, statistical inference, and machine learning,
+gradient computation of some target function is a critical component in tackling these problems.
+The simplest example in optimization is the well-known root-finding algorithm Newton-Raphson method,
+which updates a proposal value $x_n$ at every iteration by $-\frac{f(x_n)}{f'(x_n)}$,
+moving the proposal closer to a root of the function.
+In Bayesian statistics, advanced MCMC algorithms
+such as the Hamiltonian Monte Carlo (HMC) and the No-U-Turn-Sampler (NUTS) rely
+heavily on computing the gradient of a (log) joint probability density function
+to update proposal samples in the leapfrog algorithm~\cite{hoffman:2011}\cite{neal:2012}.
+Neural networks rely on computing 
+the gradient of a loss function during back-propogation
+to update the weights between each layer of the network~\cite{goodfellow:2016},
+which is where the ``learning'' occurs.
 
+Often times, the target function to differentiate is extremely complicated
+and it is very tedious and error-prone for the programmer to manually define 
+the analytical formula for the gradient~\cite{margossian:2018}.
+It is rather desirable to have a generic framework where the programmer 
+only needs to specify the target function to be able to differentiate it.
+Moreover, because computing the derivative is usually the most expensive part of any algorithm
+that relies on this gradient information and usually requires tens of thousands of evaluations, 
+it is imperative that such a framework is as efficient as possible.
+These desires motivated the development of \emph{automatic differentiation},
+a generic framework for specifying a target function to differentiate with minimal effort from the user.
 
-In quantitative finance, 
-
-Often times, the target function to differentiate is quite complicated
+Automatic differentiation (AD) comes primarily in two modes: \emph{forward} and \emph{reverse}.
+FastAD is a general-purpose AD library in C++ supporting both modes, but has a strong focus on the \emph{reverse}-mode.
+It is highly optimized to compute gradients, but also supports computing the full Jacobian matrix.
+Similar to the Stan Math Library, FastAD is primarily intended for differentiating scalar functions, 
+and it is well-known that reverse-mode is more efficient than forward-mode for these cases~\cite{carpenter:2015}.
+This is because in reverse-mode the gradient is directly computed by running the reverse-mode algorithm once,
+however, in the forward-mode, the \emph{directional derivative} is computed and hence requires 
+$n$ iterations, where $n$ is the input size, of the forward-mode algorithm to compute each of the partial derivatives.
+For these reasons, this paper will focus only on reverse-mode and computing gradients rather than a full Jacobian matrix.

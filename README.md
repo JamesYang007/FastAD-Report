@@ -1,18 +1,10 @@
 # Paper Notes
 
+Maybe in final remarks?
+- great application: PPL since we have to differentiate log-pdf
+
 ## Introduction
 
-- What are some problems that require gradient information?
-    - neural network (heavy use of GPU)
-    - PPL (STAN)
-    - variational inference
-    - more generally, optimization problems like root-finding or Newton-Raphson method
-- What is the focus of FastAD?
-    - general-purpose AD library supporting forward and reverse-mode with a focus on the latter
-    - efficiently compute scalar-functions (although vector-valued functions are also possible)
-        - great application: PPL since we have to differentiate log-pdf
-        - reverse-mode automatic differentiation is most efficient for scalar functions
-            - STAN's paper mentions this also on page 3 (Section 1)
 - List the upcoming sections:
     - Design Choices/Implementation Overview: 
         - how expression templates is used to represent the expression graph

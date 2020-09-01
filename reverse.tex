@@ -1,0 +1,167 @@
+\section{Reverse-Mode Automatic Differentiation}
+
+We briefly discuss the reverse-mode automatic differentiation algorithm
+for context and to motivate the discussion for the next sections.
+For a more in-depth treatment, we direct the readers 
+to~\cite{carpenter:2015}\cite{margossian:2018}\cite{griewank:2008}.
+
+Let us first consider any differentiable target function $f: \R^n \to \R$
+that is composed of elementary functions such as the usual arithmetic operators,
+$\exp, \log, \sin$, etc.
+Let $x \in \R^n$ be the initial input vector.
+Such a differentiable function $f$ can be represented as an expression graph
+where each node of the graph represents some elementary function with a known derivative.
+For example, consider the function 
+\begin{equation}
+    f(x_1, x_2, x_3) = \sin(x_1) + \cos(x_2) \cdot x_3 - \log(x_3)
+    \label{eq:f-example}
+\end{equation}
+Fig.~\ref{fig:expr-example} shows the corresponding expression graph
+drawn to evaluate in the same order as defined by the operator precedence in the C++ standard.
+
+% Original expression graph
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-0.5,xscale=0.5]
+
+    \draw (150,350) node [align=center, minimum size=1cm, draw, circle, fill=black!5!yellow] (x1)  {$x_1$};
+    \draw (300,350) node [align=center, minimum size=1cm, draw, circle, fill=black!5!yellow] (x2)  {$x_2$};
+    \draw (450,350) node [align=center, minimum size=1cm, draw, circle, fill=black!5!yellow] (x3)  {$x_3$};
+    \draw (150,250) node [align=center, minimum size=1cm, draw, circle, color=gray] (sin) {$\sin$};
+    \draw (300,250) node [align=center, minimum size=1cm, draw, circle, color=gray] (cos) {$\cos$};
+    \draw (525,220) node [align=center, minimum size=1cm, draw, circle, color=gray] (log) {$\log$};
+    \draw (225,100) node [align=center, minimum size=1cm, draw, circle, color=gray] (add) {$+$};
+    \draw (375,150) node [align=center, minimum size=1cm, draw, circle, color=gray] (mul) {$*$};
+    \draw (400,25)  node [align=center, minimum size=1cm, draw, circle, fill=black!20!green] (sub) {$-$};
+    \draw (x1) -- (sin);
+    \draw (x2) -- (cos);
+    \draw (x3) -- (mul);
+    \draw (x3) -- (log);
+    \draw (sin) -- (add);
+    \draw (cos) -- (mul);
+    \draw (mul) -- (add);
+    \draw (add) -- (sub);
+    \draw (log) -- (sub);
+
+\end{tikzpicture}
+
+\caption{Expression graph for Eq.~\ref{eq:f-example}}\label{fig:expr-example}
+
+\end{figure}
+
+Note that in general a variable $x_i$ can be referenced by multiple nodes.
+For example, $x_3$ is referenced by the multiplication node and the $\log$ node.
+Both for understanding and implementing the algorithm,
+it is actually more helpful to convert this expression graph into an expression tree
+by replacing all such nodes with multiple parents as separate nodes
+that have a reference back to the actual variable.
+Mathematically,
+\begin{align}
+    f(x_1, x_2, x_3) &= \tilde{f}(g(x_1, x_2, x_3)) \label{eq:f-tree-example} \\
+    \tilde{f}(w_1, w_2, w_3, w_4) &= \sin(w_1) + \cos(w_2) \cdot w_3 - \log(w_4) \nonumber \\
+    g(x_1, x_2, x_3) &= (x_1, x_2, x_3, x_3) \nonumber
+\end{align}
+Fig.~\ref{fig:expr-tree-example} shows the corresponding converted expression tree.
+This way all nodes with the exception of the leaves ($x_1,x_2,x_3$) have exactly one parent
+and have a unique path back up to the root if we view the tree as a directed graph.
+
+% Converted expression tree
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-0.5,xscale=0.5]
+
+    \draw (150,450) node [align=center, minimum size=1cm, draw, circle, fill=gray] (x1)  {$x_1$};
+    \draw (300,450) node [align=center, minimum size=1cm, draw, circle, fill=gray] (x2)  {$x_2$};
+    \draw (450,450) node [align=center, minimum size=1cm, draw, circle, fill=gray] (x3)  {$x_3$};
+    \draw (150,350) node [align=center, minimum size=1cm, draw, circle, fill=black!5!yellow] (w1)  {$w_1$};
+    \draw (300,350) node [align=center, minimum size=1cm, draw, circle, fill=black!5!yellow] (w2)  {$w_2$};
+    \draw (450,350) node [align=center, minimum size=1cm, draw=red, circle, fill=black!5!yellow] (w3)  {$w_3$};
+    \draw (600,350) node [align=center, minimum size=1cm, draw=red, circle, fill=black!5!yellow] (w4)  {$w_4$};
+    \draw (150,250) node [align=center, minimum size=1cm, draw, circle, color=gray] (sin) {$\sin$};
+    \draw (300,250) node [align=center, minimum size=1cm, draw, circle, color=gray] (cos) {$\cos$};
+    \draw (525,220) node [align=center, minimum size=1cm, draw, circle, color=gray] (log) {$\log$};
+    \draw (225,100) node [align=center, minimum size=1cm, draw, circle, color=gray] (add) {$+$};
+    \draw (375,150) node [align=center, minimum size=1cm, draw, circle, color=gray] (mul) {$*$};
+    \draw (400,25)  node [align=center, minimum size=1cm, draw, circle, fill=black!20!green] (sub) {$-$};
+    \draw [dashed] (w1) -- (x1);
+    \draw [dashed] (w2) -- (x2);
+    \draw [dashed] (w3) -- (x3);
+    \draw [dashed] (w4) -- (x3);
+    \draw (w1) -- (sin);
+    \draw (w2) -- (cos);
+    \draw (w3) -- (mul);
+    \draw (w4) -- (log);
+    \draw (sin) -- (add);
+    \draw (cos) -- (mul);
+    \draw (mul) -- (add);
+    \draw (add) -- (sub);
+    \draw (log) -- (sub);
+
+\end{tikzpicture}
+
+\caption{Converted expression tree for Eq.~\ref{eq:f-tree-example}.
+         Nodes $x_1, x_2, x_3$ are now separated from the rest of the graph by a layer of $w$ variables.
+         Note in particular that $x_3$ is now replaced with $w_3$ and $w_4$ (red boundary).
+ }\label{fig:expr-tree-example}
+
+\end{figure}
+
+The reverse-mode algorithm consists of two passes of the expression graph:
+\emph{forward}-evaluation, and \emph{backward}-evaluation.
+During the \emph{forward}-evaluation, we compute the function in the usual fashion,
+i.e.\ start at the root, recursively forward-evaluate from left to right all of its children,
+then finally take those results and evaluate the current node.
+Evaluation of each node will simply compute the operation that it represents.
+For example, after computing the $w_1$ node, 
+which is a trivial forward-evaluation of simply retrieving the value $x_1$,
+the $\sin$ node will return~$\sin(w_1) = \sin(x_1)$.
+It is called forward-evaluation because if we unroll the recursive calls,
+we are simply starting from the leaves of the expression tree
+and moving towards the root to get the full expression value.
+
+The \emph{backward}-evaluation for a given node starts by 
+receiving a value called a \emph{seed}, or better known as \emph{adjoint}, from its parent.
+This seed is precisely the partial derivative with respect to the current node.
+Using this seed, the current node computes the correct seed for all of its children and 
+backward-evaluates from \emph{right-to-left}, the opposite direction of forward-evaluation.
+This is because in general for a given node, forward-evaluating child $i$ may depend
+on the changed states of children~$1,\ldots,i-1$ subtrees after their forward-evaluation.
+\todo{Direct the reader to a later section that covers this?}
+For example, imagine a node where child $1$ represents an expression that 
+assigns some other sub-expression into a variable $t$ and child $2$ depends on this value $t$.
+
+The correct seed for each child is computed by a simple chain-rule.
+Assuming the current node is represented by $w \in \R$ and one of its children is $v \in \R$,
+\begin{align*}
+    \frac{\partial f}{\partial v} &=
+        \frac{df}{dw} \frac{\partial w}{\partial v}
+\end{align*}
+In general, if $v \in \R^{m \times n}$ and $w \in \R^{p \times q}$, then
+\begin{align*}
+    \frac{\partial f}{\partial v_{ij}} &=
+        \sum\limits_{k=1}^p \sum\limits_{l=1}^q 
+        \frac{\partial f}{\partial w_{kl}} \frac{\partial w_{kl}}{\partial v_{ij}}
+\end{align*}
+Hence, if $v$ is a vector, then the seed will also be a vector of the same size ($\nabla_v f$),
+and if it is a matrix, the seed will be a matrix of the same size ($D_v f$).
+
+For nodes that have a reference to some original variable (e.g. $w_1,\ldots,w_4$),
+they must increment the original variable's adjoints with their seed.
+This is easily seen by chain-rule again: let~$w_1, \ldots, w_k$ denote all of the variables that have a 
+reference to $x$ and for simplicity assume they are all scalars, 
+although the result can be easily generalized for multiple dimensions.
+Then,
+\begin{align*}
+    \frac{\partial f}{\partial x} 
+    &=  \sum\limits_{i=1}^k
+        \frac{\partial f}{\partial w_{i}} \frac{\partial w_{i}}{\partial x}
+    =   \sum\limits_{i=1}^k
+        \frac{\partial f}{\partial w_{i}}
+\end{align*}
+where $\frac{\partial w_i}{\partial x} = 1$ because $w_i$ is simply the identity function with respect to $x$.
+The fully accumulated adjoints for $x_1, x_2, x_3$ is then the gradient of $f$ ($\nabla_x f$).
+
+In the general case where $f: \R^n \to \R^m$,
+we can apply this algorithm for the scalar functions $f_j$ for $j = 1,\ldots,m$ and
+save each gradient as a $j$th row of a matrix.
+The final matrix is then the Jacobian of $f$.
