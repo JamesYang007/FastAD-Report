@@ -11,19 +11,17 @@ heavily on computing the gradient of a (log) joint probability density function
 to update proposal samples in the leapfrog algorithm~\cite{hoffman:2011}\cite{neal:2012}.
 Neural networks rely on computing 
 the gradient of a loss function during back-propogation
-to update the weights between each layer of the network~\cite{goodfellow:2016},
-which is where the ``learning'' occurs.
+to update the weights between each layer of the network~\cite{goodfellow:2016}.
 
 Often times, the target function to differentiate is extremely complicated
 and it is very tedious and error-prone for the programmer to manually define 
 the analytical formula for the gradient~\cite{margossian:2018}.
 It is rather desirable to have a generic framework where the programmer 
-only needs to specify the target function to be able to differentiate it.
+only needs to specify the target function to differentiate it.
 Moreover, because computing the derivative is usually the most expensive part of any algorithm
 that relies on this gradient information and usually requires tens of thousands of evaluations, 
 it is imperative that such a framework is as efficient as possible.
-These desires motivated the development of \emph{automatic differentiation},
-a generic framework for specifying a target function to differentiate with minimal effort from the user.
+These desires motivated the development of such a framework, \emph{automatic differentiation}.
 
 Automatic differentiation (AD) comes primarily in two modes: \emph{forward} and \emph{reverse}.
 FastAD is a general-purpose AD library in C++ supporting both modes, but has a strong focus on the \emph{reverse}-mode.

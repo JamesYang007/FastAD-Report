@@ -23,12 +23,12 @@ We also tested $N$ larger than $2^{14}$ since it was not enough to show any conv
 All libraries except Adept and Stan were excluded from this benchmark
 because they did not provide suitable support for matrix multiplication
 and the default overload using \verb|Eigen| API exceeded the time limit.
-All tested libraries provided built-in functions to 
+All tested libraries provide built-in functions to 
 compute the matrix multiplication and sum the elements.
 Fig.\ref{fig:matrix_mult} shows the benchmark results.
 
 FastAD is still the fastest library for all values of $N$, 
-but Stan performs much closer to FastAD than the previous examples.
+but Stan performs much closer to FastAD than in the previous examples.
 Adept consistently performs worse compared to FastAD and Stan.
 The trend stabilizes towards the end at around $N=2^{14}$ where 
 Stan is about $ 2$ times slower.
@@ -36,7 +36,7 @@ For moderate sized $N \in [2^{8}, 2^{10}]$, Stan is about 3--4 times slower.
 
 The comparison with the baseline shows that FastAD takes $ 3.14$ times longer.
 Note that forward-evaluation requires one matrix multiplication between two $N\times N$ matrices,
-and backward-evaluation also requires two matrix multiplications of the same order,
+and backward-evaluation additionally requires two matrix multiplications of the same order,
 one for each adjoint:
 \begin{align*}
     \frac{\partial f}{\partial A} 
@@ -44,7 +44,7 @@ one for each adjoint:
     \frac{\partial f}{\partial B} 
     &= A^T \cdot \frac{\partial f}{\partial (A\cdot B)}
 \end{align*}
-Hence, one gradient evaluation requires three matrix multiplications between two $N\times N$ matrices.
+Hence, in total, one AD evaluation requires three matrix multiplications between two $N\times N$ matrices.
 As a rough estimate, if we approximate a manually-written gradient computation to be
 three times the baseline (one multiplication), FastAD time relative to this approximate manual gradient computation time
 is $\frac{3.14}{3} = 1.0475$.

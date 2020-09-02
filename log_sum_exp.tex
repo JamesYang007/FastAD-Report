@@ -13,7 +13,7 @@ The log-sum-exp function is defined as $f:\R^n \to \R$
 where~$f(x) = \log(\sum\limits_{i=1}^n e^{x_i})$,
 The only library supporting a built-in function for log-sum-exp is Stan.
 All other libraries use either other built-in functions to construct this function or,
-if unavailable, use \verb|Eigen| API:\@
+if unavailable, use \verb|Eigen| API.\@
 Fig.\ref{fig:log_sum_exp} shows the benchmark results.
 
 FastAD outperforms all libraries for all values of $N$.
