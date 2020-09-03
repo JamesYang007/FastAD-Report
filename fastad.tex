@@ -1,4 +1,37 @@
 \section{FastAD Implementation}
 
-Talk more about implementation details.
-Might be wise to talk about this in multiple sections.
+In this section, we cover some of the key ideas of our implementation.
+In Section~\ref{ssec:example}, we first show an example program using FastAD
+to get an intuition for how the library works.
+Section~\ref{ssec:motivation} motivates our design choices with desirable end-goals
+from a performance perspective such as vectorization, lazy-evaluation, and lazy-allocation,
+describing in detail what these strategies are,
+why they are useful in the context of automatic differentiation,
+and how they can be achieved.
+Sections~\ref{ssec:expression_template}-\ref{ssec:glue_node} explore the most essential classes
+used to build an expression tree.
+We explore exactly where vectorization, lazy-evaluation, and lazy-allocation occurs.
+Finally, Section~\ref{ssec:normal_log_pdf} covers our implementation of
+Normal log-pdf, one of the special nodes that can be further optimized to maximize performance.
+
+\input{fastad/motivation}
+
+\input{fastad/expression_template}
+
+\input{fastad/value_view}
+
+\input{fastad/value_adj_view}
+
+\input{fastad/var_view}
+
+\input{fastad/var}
+
+\input{fastad/unary}
+
+\input{fastad/binary}
+
+\input{fastad/eq}
+
+\input{fastad/glue}
+
+\input{fastad/normal_log_pdf}

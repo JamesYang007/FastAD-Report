@@ -1,4 +1,4 @@
-\section{Reverse-Mode Automatic Differentiation}
+\section{Reverse-Mode Automatic Differentiation}\label{sec:reverse}
 
 We briefly discuss the reverse-mode automatic differentiation algorithm
 for context and to motivate the discussion for the next sections.
@@ -141,10 +141,10 @@ Child $ 2$ must update the adjoint for $t$ before backward-evaluating the sub-ex
 The correct seed for each child is computed by a simple chain-rule.
 Assuming the current node is represented by $w \in \R$ and one of its children is $v \in \R$,
 the seed for $v$ is
-\begin{align*}
+\begin{align}
     \frac{\partial f}{\partial v} &=
-        \frac{df}{dw} \frac{\partial w}{\partial v}
-\end{align*}
+    \frac{df}{dw} \frac{\partial w}{\partial v} \label{eq:next-seed}
+\end{align}
 Each node $w$ has node-specific information to compute $\frac{\partial w}{\partial v}$.
 For example, for the \verb|log| node in Fig.~\ref{fig:expr-tree-example},
 with $w$ as \verb|log| and $v$ as $w_4$,

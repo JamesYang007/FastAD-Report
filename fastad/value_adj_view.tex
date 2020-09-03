@@ -1,0 +1,41 @@
+\subsection{Class ValueAdjView}\label{ssec:value_adj_view}
+
+Since every expression node needs to view both its value and adjoint,
+it is useful to create another abstraction that does so.
+\verb|ValueAdjView| is a very light wrapper of \verb|ValueView|.
+The following is a simplified definition:
+\begin{lstlisting}[style=customcpp]
+template <class ValueType, class ShapeType>
+struct ValueAdjView: ValueView<ValueType, ShapeType>
+{
+    using ptr_pack_t = util::PtrPack<value_t>;
+
+    ValueAdjView(value_t* val, 
+                 value_t* adj,
+                 size_t rows=1, 
+                 size_t cols=1)
+        : base_t(val, rows, cols)
+        , adj_view_(adj, rows, cols)
+    {}
+     
+    var_t& get_adj() { return adj_view_.get(); }
+    const var_t& get_adj() const { return adj_view_.get(); }
+
+    ptr_pack_t bind(ptr_pack_t begin)
+    { 
+        begin.val = base_t::bind(begin.val);
+        begin.adj = adj_view_.bind(begin.adj);
+        return begin;
+    }
+
+private:
+    base_t adj_view_;
+};
+\end{lstlisting}
+A \verb|ValueAdjView| object \emph{is} a \verb|ValueView| object
+and additionally contains another \verb|ValueView| object to view the adjoints.
+We expose more member functions such as \verb|get_adj| 
+to easily interface with both the underlying value and adjoints.
+\verb|bind| is written a little differently to take in a pointer pack of type \verb|ptr_pack_t|.
+This pointer pack contains two pointers --- one for the value region and one for the adjoint.
+The function then binds the value and adjoint by delegating to the underlying \verb|ValueView| objects.
