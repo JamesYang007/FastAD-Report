@@ -1,0 +1,110 @@
+\subsection{Eq Node}\label{ssec:eq}
+
+So far, we have only considered expressions that could be fully specified in one step.
+However, in practice, expressions may need to be broken up into multiple steps
+to avoid unnecessary computations.
+For example, consider the function
+\begin{align}
+    f(x,w) = xw + \sin(xw) \label{eq:eq-example}
+\end{align}
+If we naively implement this function in FastAD, 
+we would generate the following expression:
+\begin{lstlisting}[style=customcpp]
+    auto expr = (x * w + ad::sin(x * w));
+\end{lstlisting}
+This would compute \verb|x * w| twice.
+If \verb|x| and \verb|w| were large matrices and instead of \verb|x * w|
+we had \verb|ad::dot(x, w)| as matrix multiplication,
+this extra computation would be quite significant.
+FastAD provides a way to assign an expression to a variable as a placeholder.
+This is the job of \verb|EqNode|.
+The following is a simplified definition of only the member functions:
+\begin{lstlisting}[style=customcpp]
+    const var_t& feval()
+    {
+        return this->get() = var_view_.get() = expr_.feval();
+    }
+
+    template <class T>
+    void beval(const T& seed)
+    {
+        var_view_.beval(seed);
+        auto&& a_adj = util::to_array(var_view_.get_adj());
+        expr_.beval(a_adj);
+    }
+
+    ptr_pack_t bind_cache(ptr_pack_t begin)
+    {
+        ptr_pack_t var_ptr_pack(var_view_.data(), 
+                                var_view_.data_adj());
+        value_adj_view_t::bind(var_ptr_pack);
+        begin = expr_.bind_cache(begin);
+        auto size_pack = expr_.single_bind_cache_size();
+        begin.val -= size_pack(0);
+        begin.adj -= size_pack(1);
+
+        expr_.bind(var_ptr_pack);
+
+        return begin;
+    }
+
+    util::SizePack bind_cache_size() const 
+    { 
+        return expr_.bind_cache_size() - 
+                expr_.single_bind_cache_size();
+    }
+
+    util::SizePack single_bind_cache_size() const 
+    { return {0,0}; }
+};
+\end{lstlisting}
+It is worth explaining each member function again, 
+since their behaviors are all unique to this node.
+Note that \verb|var_view_| is a \verb|VarView| object that represents the placeholder
+and \verb|expr_| represents the expression to assign.
+
+The only non-trivial cache function is \verb|bind_cache|.
+The other cache functions will follow immediately.
+Because \verb|EqNode| can be thought of as a simple wrapper of 
+the left-side variable (just additionally remembering to assign right side to left side),
+it has no reason to request cache to store its value and adjoint
+because it will always be the same as that of the left-side variable.
+Hence, the node can simply view the same value and adjoint that the variable views.
+Moreover, the right-side will always have the same value as the left-side
+by definition of assignment.
+Once the right-side expression is bound to cache, 
+we can ``strip'' just the root of the expression
+of its value and adjoint cache and force it to view those of the variable.
+This way we reduce unnecessary copies and at time of forward-evaluation,
+the right-side expression will write directly to the variable's value region.
+For this reason, we must subtract away the 
+single cache size required for the root of that expression.
+
+\verb|feval| first forward-evaluates the right-side expression
+and stores the result into the variable on the left-side
+as well as to the value region of the \verb|EqNode|.
+In most cases, some of the assignments will essentially be a no-op
+if there is reflexivity, however in general, we need all of these assignments
+because the parent of the current node could also be an \verb|EqNode|
+which will then strip the current \verb|EqNode| of its value and adjoint
+to view elsewhere.
+
+\verb|beval| accumulates the adjoint for the left-side variable
+and backward-evaluates the expression with the now fully accumulated adjoint.
+
+With this assignment node, our code for Eq.~\ref{eq:eq-example}
+may look like the following:
+\begin{lstlisting}[style=customcpp]
+    ad::Var<double, ad::scl> t;
+    auto expr = (
+        t = x * w,
+        t + ad::sin(t)
+    );
+\end{lstlisting}
+Note that we also overloaded the comma operator
+and this will be discussed in more detail in Section~\ref{ssec:glue}.
+Intuitively, during forward-evaluation, \verb|x * w| will first be evaluated,
+stored into \verb|t|, and this value will get reused when computing the second expression.
+Backward-evaluation will still compute the correct gradient with respect to \verb|x| and \verb|w|.
+This is also useful if users are interested in knowing sub-expression gradients.
+Since \verb|t| is a variable, its full gradient is also stored and can be retrieved.

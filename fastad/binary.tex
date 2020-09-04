@@ -1,0 +1,44 @@
+\subsection{Binary Node}\label{ssec:binary}
+
+\verb|BinaryNode| represents any vectorized binary operation.
+It is a well-defined operation between a scalar and any shape 
+and between two objects with the same shape.
+\verb|BinaryNode| is very similarly written as \verb|UnaryNode| shown in Section~\ref{ssec:unary}.
+For this reason, we do not show the full code,
+but only the backward-evaluation to illustrate why we need to save the seeds.
+The following is the simplified logic for backward-evaluation:
+\begin{lstlisting}[style=customcpp]
+    template <class T>
+    void beval(const T& seed)
+    {
+        auto&& a_val = util::to_array(this->get());
+        auto&& a_adj = util::to_array(this->get_adj());
+        auto&& a_l = util::to_array(expr_lhs_.get());
+        auto&& a_r = util::to_array(expr_rhs_.get());
+
+        a_adj = seed;
+        auto&& rhs_seed = Binary::brmap(a_adj, a_l, a_r, a_val);
+        auto&& lhs_seed = Binary::blmap(a_adj, a_l, a_r, a_val);
+        expr_rhs_.beval(rhs_seed);
+        expr_lhs_.beval(lhs_seed);
+    }
+\end{lstlisting}
+The first four lines prepare array-like versions of the 
+forward-evaluated value, current node's adjoint,
+left expression's forward-evaluated value,
+and the right expressions' forward-evaluated value, respectively.
+The next line evaluates and saves the seed expression into the node's adjoint.
+The class \verb|Binary| has members \verb|blmap| and \verb|brmap|
+referring to the backward-evaluation method for the left and right expressions, respectively.
+Like the \verb|Unary| class for \verb|UnaryNode| for vectors and matrices,
+this returns an \verb|Eigen| expression.
+If the seed were not evaluated and saved into \verb|a_adj|
+and \verb|seed| were passed in as the first parameter instead to \verb|blmap| and \verb|brmap|,
+\verb|rhs_seed| and \verb|lhs_seed| would contain a copy of the \verb|seed| expression.
+When backward-evaluating on the children,
+the \verb|seed| expression will eventually be evaluated at least twice.
+In fact, if the left and right expressions also contain \verb|BinaryNode|s,
+then they will each copy this \verb|seed| expression to their children,
+requiring exponentially more evaluations.
+This is a form of dynamic programming where saving the \verb|seed| can save tremendous amount of time.
+This was mentioned in~\cite{carpenter:2015} and it remains relevant in our design as well.

@@ -3,39 +3,8 @@
 Maybe in final remarks?
 - great application: PPL since we have to differentiate log-pdf
 
-## Introduction
-
-- List the upcoming sections:
-    - Design Choices/Implementation Overview: 
-        - how expression templates is used to represent the expression graph
-            - stack-allocated and minimal in memory footprint 
-            - show simplified code for `UnaryNode`
-            - 
-        - implications of such design in terms of memory and lazy allocation
-    - Benchmarks:
-        - micro:
-            - sum, sum_iter, prod, prod_iter, mat mult
-        - macro: 
-            - normal logpdf, regression model
-    - Related Works:
-        - Main comparison will be between STAN and occasionally Adept since they are the two libraries
-          that are closest in their aim with that of FastAD.
-          Benchmarks also show that they were consistently the two fastest libraries aside from FastAD.
-        - 
-
 ## Reverse-mode Automatic Differentiation
-- give a summary of the flow of the paper: I will explain the unique aspects of my library that were the main contributors to the performance boost, then in then next section show some benchmarks with other libraries, then discuss how my implementation differs and overcomes the challenges faced by other libraries (related works), conclusion, then further studies.
 unique aspects of my library:
-— able to easily integrate Eigen, which will then reuse a lot of vectorized code. I have a couple examples: sum, matrix mult, normal log-pdf which can benefit a lot from vectorization and are very common use-cases. Should I show the simplified code for the important parts of each of these examples? These parts are best explained if I explain the general class structure for an expression node to give context.
-— lazy evaluation of back-evaluation part of AD algorithm: save memory and also time by reusing values computed already from forward-evaluation. A good example is exp  and show just the back-evaluation part which is like 2 lines of code. Reader will have had enough context to understand it if the previous point showed some code.
-— “lazy allocation” (term I made up xD): only allocate what you need per expression graph. I have to show some code to explain how this works, otherwise it’s so hard to explain.
-Benchmarks:
-Related Works:
-- expression graph difference with other libraries
-— Lazy allocation and the fact that the expression graph is just some stack-allocated thing gets rid of the need for the traditional “tape” method that ADOL-C talks about in their paper, which is also what Adept and Stan do.
-- vectorization:
-— Adept tried but failed (exxdeeeee). STAN tried and got further but requires more memory.
-Conclusion: I rock
 Further Studies: GPU support and higher-order derivatives
 
 ## Benchmark

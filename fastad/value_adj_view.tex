@@ -39,3 +39,4 @@ to easily interface with both the underlying value and adjoints.
 \verb|bind| is written a little differently to take in a pointer pack of type \verb|ptr_pack_t|.
 This pointer pack contains two pointers --- one for the value region and one for the adjoint.
 The function then binds the value and adjoint by delegating to the underlying \verb|ValueView| objects.
+Each of the pointers are then updated to point to the next unbound memory location and the pack is returned.

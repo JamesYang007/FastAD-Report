@@ -1,3 +1,12 @@
 \section{Overview}
 
-\todo{Add flow of paper}
+Section~\ref{sec:reverse} will first explain the reverse-mode automatic differentation
+to give context of how FastAD is implemented.
+With this background, Section~\ref{sec:fastad} will introduce the ideas:
+vectorization, lazy-evaluation, and lazy-allocation and explain why these
+ideas are useful in the context of AD to motivate our design for FastAD.
+In Section~\ref{sec:benchmark}, we show a series of benchmarks with
+other AD libraries including two real-world examples 
+of a regression model and a stochastic volatility model.
+Section~\ref{sec:related} concludes the paper with final remarks on
+the design differences between FastAD and other libraries.

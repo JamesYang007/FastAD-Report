@@ -1,0 +1,69 @@
+\subsection{Example}\label{ssec:example}
+
+In this section, we show how FastAD can be used to differentiate Eq.~\ref{eq:f-example}.
+The following is one example of how this can be done:
+\begin{lstlisting}[style=customcpp]
+    ad::Var<double, ad::scl> x1, x2, x3;
+    auto expr = ad::bind(
+        (ad::sin(x1) + ad::cos(x2) * x3 - ad::log(x3))
+    );
+    double f = ad::autodiff(expr);
+    std::cout << f << std::endl;
+    std::cout << x1.get_adj() << std::endl; // print df/dx1
+    std::cout << x2.get_adj() << std::endl; // print df/dx2
+    std::cout << x3.get_adj() << std::endl; // print df/dx3
+\end{lstlisting}
+The user first declares AD variables to represent the independent variables.
+The second template parameter of \verb|Var| describes the general shape of the variable.
+\verb|scl| represents a scalar.
+Then the user creates the expression for the function that they want to differentiate.
+The way we construct expressions is very different from most AD libraries.
+When the expression is constructed, it does not forward-evaluate.
+Rather, it returns a cheap, stack-allocated object that stores information
+about \emph{how} to evaluate this expression --- this is made possible through expression templates.
+The expression is wrapped with a call to \verb|ad::bind|,
+which will create a wrapper class of the underlying expression binding it
+to a region of memory for the values and adjoints of the intermediate expression nodes.
+In analogy to Fig.~\ref{fig:expr-tree-example}, the declared \verb|xi| variables
+correspond to the gray $x_i$ containers in the figure and the \verb|xi|
+that are used during the expression construction correspond to $w_i$ nodes in the figure.
+\verb|autodiff| is the function that forward and backward-evaluates an expression.
+It returns the forward-evaluated value (function value)
+and the gradient will be stored in the containers \verb|xi|.
+The user can retrieve these values by using the member function \verb|get_adj|.
+
+The following is another example using \verb|VarView|,
+which, unlike \verb|Var|, does not own any storage for its value and adjoint,
+but rather views external memory regions for these quantities.
+\begin{lstlisting}[style=customcpp]
+    std::vector<double> val_buf(3), adj_buf(3);
+    ad::VarView<double, ad::scl> x1(val_buf.data(), 
+                                    adj_buf.data());
+    ad::VarView<double, ad::scl> x2(val_buf.data()+1, 
+                                    adj_buf.data()+1);
+    ad::VarView<double, ad::scl> x3(val_buf.data()+2, 
+                                    adj_buf.data()+2);
+    // rest is same...
+\end{lstlisting}
+Each \verb|xi| views the $i$th element of \verb|val_buf| and \verb|adj_buf|.
+
+Finally, although multi-dimensional shapes are supported with the intention of
+performing vectorized operations, one can certainly use it in this context as well:
+\begin{lstlisting}[style=customcpp]
+    ad::Var<double, ad::vec> x(3); // size is 3
+    auto expr = ad::bind(
+        (ad::sin(x[0]) + ad::cos(x[1]) * x[2] - ad::log(x[2]))
+    );
+    double f = ad::autodiff(expr);
+    std::cout << f << std::endl;
+    std::cout << x.get_adj() << std::endl; // print full gradient
+\end{lstlisting}
+Note that \verb|x| is declared with a vector-shape (\verb|vec|).
+The size must be known at the time of construction.
+We provide a subscript-operator for vector-shapes
+that makes it convenient to construct the same expression as before.
+The adjoint of \verb|x| is the gradient and 
+is represented as an \verb|Eigen| matrix-like object,
+hence the user can easily interface with this adjoint by using \verb|Eigen| API.\@
+For example, \verb|Eigen| matrix objects can be passed to \verb|std::cout|
+to print out all of the elements.

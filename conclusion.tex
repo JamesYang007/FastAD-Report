@@ -1,3 +1,21 @@
 \section{Conclusion}
 
-QED.
+In this paper, we first briefly introduced the reverse-mode automatic differentiation algorithm
+to give context and background on how FastAD is implemented.
+We then discussed the three design goals that FastAD 
+was able to achieve, and together, make it a unique automatic differentation library:
+vectorization, lazy-evaluation, and lazy-allocation.
+To better understand how these goals were achieved,
+we explored the implementation details of some of the most important expression nodes.
+Additionally, we demonstrated that compile-time optimizations could be made
+to further optimize each individual node.
+To see how FastAD performs in practice, we rigorously benchmarked 
+a set of micro and macro-benchmarks
+with other popular AD libraries and showed that FastAD consistently achieved
+faster performance by orders of magnitude ranging from 2 to 20 times 
+than the next fastest library, depending on the problem.
+We then made further analysis on the design differences
+primarily with Stan, the library closest in design and intended use-case as FastAD,
+showing that FastAD generates more vectorized code,
+consumes less memory,
+and allows for more inlining.

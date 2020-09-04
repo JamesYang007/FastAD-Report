@@ -1,14 +1,4 @@
-\subsection{Expression Node}
-
-As mentioned in Section~\ref{ssec:var_view},
-all other expression nodes only need to
-implement the five member functions: \verb|feval|, \verb|beval|,
-\verb|bind_cache|, \verb|bind_cache_size|, and \verb|single_bind_cache_size|.
-We describe how some of the most common expression nodes are defined
-to demonstrate that this design, in fact, holds generally and 
-can be easily implemented for any kind of expression nodes.
-
-\subsubsection{Unary}
+\subsection{Unary Node}\label{ssec:unary}
 
 A unary operation on a scalar, vector, or a matrix is a vectorized 
 operation applying a function $\phi$ element-wise.
@@ -16,6 +6,17 @@ More concretely, we say $f$ is a (vectorized) unary function if
 \[
     f(x) = {[\phi(x_{ij})]}_{i=1,j=1}^{m,n}
 \]
+for some $\phi$.
+As mentioned in Section~\ref{ssec:var_view},
+all expression nodes only need to
+implement the five member functions: 
+\begin{itemize}
+    \item \verb|feval|
+    \item \verb|beval|
+    \item \verb|bind_cache|
+    \item \verb|bind_cache_size|
+    \item \verb|single_bind_cache_size|
+\end{itemize}
 The following is a simplified definition of a unary expression node:
 \begin{lstlisting}[style=customcpp]
 template <class Unary
@@ -64,26 +65,66 @@ private:
 };
 \end{lstlisting}
 
-A unary expression node is also a viewer of value and adjoint.
-It is also an expression node, and hence is tagged with \verb|ExprBase|.
-The constructor initializes the viewer with null pointers and the correct size.
-Because a unary operation is always vectorized,
-the value and adjoint size is always the same as the operand's size.
-The first template parameter \verb|Unary| is a type that defines
+\verb|UnaryNode| is also a viewer of value and adjoint,
+hence derives from \verb|ValueAdjView|.
+We follow the standard traits metaprogramming pattern by defining our own
+traits classes \verb|expr_traits| and \verb|shape_traits| to unify the interface
+for grabbing member aliases.
+\verb|UnaryNode| is also an expression node, and hence is tagged with \verb|ExprBase|.
+The first template parameter \verb|Unary| is a class that defines
 static member functions \verb|fmap| and \verb|bmap|,
 which define how to forward and backward-evaluate the current node, respectively.
+The second template parameter indicates the operand's type,
+and this is what makes our design ``expression-template based''.
+The operand expression type can be quite complicated, but regardless of the type,
+so long as it is a valid AD expression and the current node only interacts with the interface
+that every AD expression provides, the current node is well-defined.
+While not shown in the above code, we also make compile-time assertions
+to check that \verb|ExprType| is indeed a valid AD expression type.
+
+The constructor first initializes the viewer with null pointers and the correct size.
+Because a unary operation is always vectorized,
+the value and adjoint size is always the same as the operand's size.
+It then constructs the operand expression with the parameter \verb|expr|.
+While this may seem like there will be many copy constructions when constructing a full expression,
+since each node seems to copy construct the children expressions every time,
+compilers are extremely well-equipped to optimize this kind of code with 
+Return-Value-Optimization (RVO).
+This allows the compiler to generate code to construct the object 
+one-time, inplace at the final variable location.
+For example, the expression in Section~\ref{ssec:example}
+\begin{lstlisting}[style=customcpp]
+    auto expr = ad::sin(x1) + ad::cos(x2) * x3 - ad::log(x3);
+\end{lstlisting}
+will construct the full object one-time, inplace at \verb|expr|.
 
 The forward-evaluation defined by \verb|feval| first
 forward-evaluates the operand \verb|expr_| and then applies the unary operation
 on the result by delegating to \verb|Unary::fmap|.
 We then save and return this result.
+The code is extremely simple and compact and it applies for any shape (scalar, vector, or matrix).
+Moreover, since we directly work with \verb|Eigen| matrices of \verb|double|, 
+which view contiguous region of memory by design,
+we are able to vectorize the forward-evaluation.
 
 The backward-evaluation defined by \verb|beval| first saves the seed to its adjoint.
 It is important to save the seed because in general it may be some 
 non-trival \verb|Eigen| expression.
-In general, if we do not evaluate and save the seed,
-we may recompute the same expression for the seed multiple times 
-when we backward-evaluate its children.
+\verb|Eigen| expressions are not evaluated until the assignment operator
+is invoked on an object that has storage.
+Hence, if we do not evaluate and save the seed,
+we may suffer from recomputing the same expression for the seed multiple times 
+when backward-evaluating its children.
+This problem is more evident when the node has multiple children (see Section~\ref{ssec:binary}).
+
+\if 0
+For example, backward-evaluating one child with \verb|seed * ...| and
+then backward-evaluating another child with \verb|seed * ...| will 
+result in sending two \verb|Eigen| expressions.
+At the time of evaluating these \verb|Eigen| expressions, 
+\verb|seed| expression, in particular, will be evaluated at least twice.
+\fi
+
 We compute the seed for the operand by delegating to \verb|Unary::bmap|.
 Note that we pass in the current adjoint \verb|a_adj|, 
 operand value \verb|a_expr|, and 
@@ -91,17 +132,29 @@ the forward-evaluated result \verb|a_val|.
 We pass the seed because the next seed to compute may be more efficiently written 
 than writing \verb|seed * Unary::bmap(a_expr, a_val)|.
 For example, if \verb|Unary| represents \verb|log|,
-the current approach can return \verb|seed / a_expr|, however
+the current approach will return \verb|seed / a_expr|, however
 the less efficient approach will return \verb|seed * (1./a_expr)|,
 which requires an extra multiplication.
 In fact, if the underlying expression is a vector or a matrix,
-the extra multiplication is per element, so there is a lot of extra computation.
+the extra multiplication is per element, so there is a lot of extra computation
+from this seemingly innocuous difference.
 This optimization refers back to Section~\ref{sssec:lazy-eval} regarding lazy evaluation.
-We pass the forward-evaluated result because
+As for providing the forward-evaluated result, 
 some unary operations may be more optimized to reuse this value,
 for example, exponential function.
 
-The cache-related logic in the general case was already explained in Section~\ref{ssec:var_view}.
+The cache-related member functions can be explained altogether.
+When binding to cache, it should first bind the underlying 
+expression then bind itself to the next unbound location.
+It is important to establish the same order in which we perform forward-evaluation.
+This will make access to value and adjoint regions as linear as possible,
+which is highly optimized for modern CPUs.
+Moreover, this increases data locality, so (CPU) cache hits are increased.
+Since this unary node itself requires cache,
+and the respective sizes for value and adjoint is the same as its size,
+the single cache size is its size for both value and adjoint,
+and the total cache size is then its single cache size plus
+the total cache size needed for the underlying expression.
 
 The following is an example of a Unary struct that will get passed in 
 as the first template parameter to \verb|UnaryNode|.
@@ -124,8 +177,13 @@ struct Exp
 	}
 };
 \end{lstlisting}
+We expose \verb|exp| functions in various namespaces for argument-dependent lookup (ADL).
+This allows the compiler to choose the \verb|exp| function that best matches
+the parameter type \verb|x|.
+\verb|bmap| ignores the \verb|x| value because the derivative of an exponential
+is itself, which is the forward-evaluated value \verb|f|.
 
-The final piece is defining a function that will create such a node.
+The final piece is defining a function that will create a \verb|UnaryNode|.
 It is important to create such a function rather than explicitly
 construct this \verb|UnaryNode| object because function templates
 are able to deduce the types of its arguments, which is crucial when using expression templates,
@@ -153,9 +211,13 @@ This function is only enabled when the operand expression \verb|node|
 ``can be converted to an AD expression''.
 Broadly, we defined this metaprogramming tool to check if 
 \verb|node| is a literal, an \verb|Eigen| object, 
-or already an AD expression (tagged with \verb|ExprBase|),
-since a literal or an \verb|Eigen| object can be wrapped as a \verb|ConstantNode|,
-which is an AD expression, or if it already is an AD expression, no conversion is needed.
+a \verb|Var| object,
+or already an AD expression (tagged with \verb|ExprBase|).
+A literal or an \verb|Eigen| object is not an AD expression,
+but once wrapped as a \verb|ConstantNode| becomes an AD expression.
+If it is a \verb|Var| object, it can be converted to \verb|VarView|, which is an AD expression.
+This was the reason why we made \verb|Var| inherit from \verb|VarView|.
+If it already is an AD expression, no conversion is needed.
 The \verb|convert_to_ad_t| will then convert the original type to the corresponding AD expression type,
 and this converted object \verb|expr| gets used 
 to construct the \verb|UnaryNode| with \verb|Exp| as the first template parameter.

@@ -36,7 +36,7 @@ struct VarViewBase<VarView<ValueType, ShapeType>>:
 
 \verb|VarView| inherits \verb|ValueAdjView| and hence views
 a region for values and adjoints.
-The second base class \verb|ExprBase| is utilizes Curiously Recurring Template Pattern (CRTP).
+The second base class \verb|ExprBase| utilizes Curiously Recurring Template Pattern (CRTP).
 This is a common technique to tag certain classes to unify various classes as one ``concept''
 \todo{find some reference for this?}.
 Every expression node must implement the five member functions shown above.
@@ -55,7 +55,7 @@ when the adjoint may be a vector or a matrix.
 Unfortunately, \verb|Eigen| matrix-like objects do not play well with element-wise operations,
 and such API is only available for array-like objects.
 Note that the conversion from a matrix object to an array object 
-is cost-free and it only exposes a different API.\@
+is cost-free (done at compile-time) and it only serves to expose a different API.\@
 
 The next three members define how lazy allocation is performed.
 We refer to the memory region allocated for values and adjoints for
@@ -67,18 +67,18 @@ e.g. $x_i$ and $w_i$ in Fig.~\ref{fig:expr-tree-example}.
 needed for the subtree starting at the current expression node.
 \verb|single_bind_cache_size| is a member that computes the number of value and adjoint elements
 for the current expression node only (non-recursive).
-In general, \verb|bind_cache_size| is the \verb|single_bind_cache_size| 
-plus the \verb|bind_cache_size| for all of its children.
-If the subtree is rooted at a \verb|VarView| object,
+For a \verb|VarView| object,
 since it has no children and it does not need to bind to any cache,
-it returns $ 0$ for both sizes.
-\verb|SizePack| is a class that contains two unsigned long integers
+it returns $ 0$ for both sizes as a \verb|SizePack|,
+which is a class that contains two unsigned long integers
 that represent the value and adjoint sizes.
 \verb|bind_cache| takes its argument,
-which will usually be a pointer pack object mentioned in Section~\ref{ssec:value_adj_view}
-containing pointers to the first value and adjoint it can bind to
-and delegate the call to the \verb|ValueAdjView| base class.
-In the case of \verb|VarView|, however, it returns the argument back.
+which will usually be a pointer pack object mentioned in Section~\ref{ssec:value_adj_view},
+and if cache is required for the current node,
+bind itself to view the value and adjoint region using the pointer pack
+and return the pack pointing to the next unbound location.
+In the case of \verb|VarView|, however, it just returns the argument back
+because it does not need to bind to any cache.
 
 \verb|VarView| objects are extremely useful because it gives the user full control 
 of the memory layout of the values and adjoints for the independent variables.

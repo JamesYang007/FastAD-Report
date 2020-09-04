@@ -12,7 +12,8 @@ to implement lazy allocation.
 As for vectorization, the goal is to reuse a well-polished and efficient
 matrix library such as \verb|Eigen| to create vectorized code.
 Others have noted that integrating another expression-template based matrix library 
-such as \verb|Eigen| into an AD system can be quite challenging~\cite{hogan:2014}.
+such as \verb|Eigen| into an AD system can be quite challenging~\cite{hogan:2014}
+and lead to unexpected memory-related problems~\cite{carpenter:2015}.
 However, once the AD system itself is fully based on expression-templates,
 one can easily integrate any such matrix library.
 For a full treatment of expression templates, 
@@ -54,7 +55,8 @@ and so this reduction of temporaries become useful.
 
 Lazy evaluation can also be used during forward and backward-evaluation.
 The reason for delaying forward-evaluation is to separate
-the memory-related steps from the actual forward-evaluation step.
+the memory-related steps from the actual forward-evaluation step,
+which are usually combined into one step in other libraries.
 This leads to the idea of lazy allocation, which is discussed in the next section.
 As for backward-evaluation, one can lazily compute the next seed for a given node's children.
 After the forward-evaluation of a node $w$, 
@@ -94,6 +96,6 @@ When the user is ready to carry out the AD evaluation,
 they can compute the necessary sizes by consulting the expression object,
 one-time allocate memory with those sizes, and
 bind the expression to view this region of memory.
-This will become clearer in Section~\todo{the one that talks about bind cache}
+This will become clearer in Sections~\ref{ssec:var_view} and~\ref{ssec:unary}
 and is the key idea to reducing memory consumption in AD, 
 as will be discussed further in Section~\todo{Related works?}.\@

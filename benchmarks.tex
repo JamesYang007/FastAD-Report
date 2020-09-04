@@ -1,4 +1,4 @@
-\section{Benchmarks}
+\section{Benchmarks}\label{sec:benchmark}
 
 In this section, we compare performances of various libraries against FastAD for a range of examples.
 The following is an alphabetical list of the libraries used for benchmarking:\@
@@ -44,6 +44,12 @@ Finally, FastAD has a dependency on \verb|Eigen| matrix library,
 but we note that this is also a dependency for Stan.
 The only application running was \verb|iTerm2| (terminal),
 the benchmark program, and system-related applications.
+
+Compile time was not rigorously benchmarked, 
+although we do note that adding code for Stan did, in fact,
+increase compile time dramatically, which was also observed in~\cite{carpenter:2015}.
+This is likely due to the fact that Stan has numerous large dependencies
+such as Boost, Eigen, Sundial, and TBB.
 
 All benchmarks benchmark the case where a user wishes to differentiate
 a scalar function $f$ for different values of $x$.

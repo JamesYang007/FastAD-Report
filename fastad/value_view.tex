@@ -1,6 +1,6 @@
-\subsection{Class ValueView}
+\subsection{Class ValueView}\label{ssec:value_view}
 
-The first class template we discuss is the \verb|ValueView|.
+The first class template we discuss is \verb|ValueView|.
 As mentioned in Section~\ref{sssec:lazy-alloc},
 every expression node simply needs to view a region of memory as its value and adjoint.
 More generally, this leads to creating a class that views some memory region
@@ -14,8 +14,8 @@ The following is the forward-declaration of \verb|ValueView|:
 \verb|ShapeType| indicates the general shape of the value.
 It must be one of \verb|ad::scl|, \verb|ad::vec|, or \verb|ad::mat| 
 indicating scalar, vector, or matrix shape, respectively.
-This extra shape information has proven to be very helpful in making compile-time optimizations.
-See Section~\todo{reference the normal log pdf in optimization section} for more details.
+This extra shape information has proven to be very helpful in making compile-time optimizations
+(see Section~\ref{ssec:normal_log_pdf}).
 
 The following is a simplified version of \verb|ValueView| specialized for scalars and vectors.
 We omit the specialization for matrices since it is very similar to that of vectors:
@@ -79,16 +79,16 @@ Note that the constructor always takes in two size parameters.
 This is to keep the API consistent for all specializations.
 \verb|begin| points to the beginning of the memory that we wish to view
 and is used to bind the underlying pointer.
-\verb|get| will always returns a reference to the whole value.
+\verb|get| will always return a reference to the ``whole value''.
 In the case of scalar, the whole value is simply the first value.
 However, in the case of vector or matrix shape, the whole value is the vector or the matrix.
 \verb|bind| allows the object to lazily rebind to a memory region
 starting at \verb|begin| and always returns the pointer to the next unbound location.
-This will play a critical role to employ lazy allocation (see Section~\ref{sssec:lazy-alloc}).
+This will play a critical role in employing lazy allocation (see Section~\ref{sssec:lazy-alloc}).
 In the scalar case, since it only views one value, 
 it will first save the pointer \verb|begin| and return \verb|begin + 1|.
 In the vector and matrix case, it will save the pointer 
 using the overloaded \verb|new| operator for \verb|Eigen::Map| objects and return \verb|begin + size|,
 where \verb|size| is the total number of elements.
-Note that \verb|new| does not heap-allocate \verb|Eigen::Map| objects, 
+Note that \verb|new| does not heap-allocate for \verb|Eigen::Map| objects, 
 rather it just sets some pointers and integers.

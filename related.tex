@@ -1,4 +1,11 @@
-\section{Related Work}
+\section{Related Work}\label{sec:related}
 
-\todo{Compile Time (loosely) and mention that we only rely on Eigen as dependency 
-      whereas Stan relies on TBB, Sundial, boost, which makes it extremely bulky}
+In this section, we compare the design of FastAD with existing libraries.
+We will primarily compare with Stan, since it is the closest in design principles
+and intended usage, and occasionally with Adept, ADOL-C, CppAD, and Sacado.
+
+\input{related/vectorization}
+
+\input{related/memory}
+
+\input{related/inline}
