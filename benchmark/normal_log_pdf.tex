@@ -18,17 +18,8 @@ For this benchmark, $\mu = -0.56,\,\sigma = 1.37$ and are kept as constants;
 the values themselves are not so important so long as $\sigma > 0$
 and are used consistently across all libraries.
 Only Stan and FastAD provide built-in functions to compute this function.
-All other libraries are written with the \verb|Eigen| API to compute the sum in $f$ except Adept.
-Adept provides \verb|norm2| function and we attempted to try the following:
-\begin{lstlisting}[style=customcpp]
-    adept::aReal operator()(const adept::aVector& x) const
-    {
-        return -adept::norm2(x - mu_) / (2 * sigma_ * sigma_) 
-                - (x.size() * std::log(sigma_));
-    }
-\end{lstlisting}
-where \verb|mu_| and \verb|sigma_| are of type \verb|double|.
-However, this does not produce the correct adjoints.
+Adept provides \code{norm2} function that computes squared-norm,
+however, this did not produce the correct adjoints.
 Hence, our only choice was to write a naive for-loop method.
 Fig.\ref{fig:normal_log_pdf} shows the benchmark results.
 
@@ -44,9 +35,5 @@ Adept about $ 41$ times,
 and Sacado about $ 198$ times.
 This difference is the largest we have seen so far,
 and this is largely due to how we compute $\log(\sigma)$.
-Using standard template metaprogramming, 
-the normal log-pdf expression node can check at compile-time whether $\sigma$ is a constant;
-if so, the compiler generates code to compute $\log(\sigma)$ only once.
-At runtime, we never perform any \verb|if-else| statements
-to check whether $\sigma$ is a constant.
-This value is saved and reused for future evaluations.
+Section~\ref{ssec:normal_log_pdf} showed that when $\sigma$ is constant,
+the compiler generates code to compute $\log(\sigma)$ only once.

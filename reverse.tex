@@ -10,7 +10,7 @@ that is composed of elementary functions such as the usual arithmetic operators,
 exp, log, sin, etc.
 Let $x \in \R^n$ be the initial input vector.
 Such a differentiable function $f$ can be represented as an expression graph
-where each node of the graph represents some elementary function with a known derivative.
+where each node of the graph represents an elementary function.
 For example, consider the function 
 \begin{equation}
     f(x_1, x_2, x_3) = \sin(x_1) + \cos(x_2) \cdot x_3 - \log(x_3)
@@ -50,7 +50,7 @@ drawn to evaluate in the same order as defined by the operator precedence in the
 \end{figure}
 
 Note that in general a variable $x_i$ can be referenced by multiple nodes.
-For example, $x_3$ is referenced by the \verb|*| node and the \verb|log| node.
+For example, $x_3$ is referenced by the \code{*} and \code{log} nodes.
 It is actually more helpful to convert this expression graph into an expression tree
 by replacing all such nodes with multiple parents as separate nodes
 that have a reference back to the actual variable.
@@ -61,14 +61,15 @@ Mathematically,
     g(x_1, x_2, x_3) &= (x_1, x_2, x_3, x_3) \nonumber
 \end{align}
 Fig.~\ref{fig:expr-tree-example} shows the corresponding converted expression tree.
-This way all nodes with the exception of the leaves ($x_1,x_2,x_3$) have exactly one parent
-and have a unique path back up to the root if we view the tree as a directed graph.
+This way all nodes with the exception of \code{$x_i$} have exactly one parent
+and have a unique path back up to the root, if we view the tree as a directed graph.
 While this may seem more complicated than the original expression graph,
 implementation becomes much cleaner with this new approach.
 With the converted expression tree, we will see momentarily that 
 we may actually start the algorithm from $w_i$ instead of $x_i$.
-Rather than treating $x_i$ as nodes of the expression graph,
-we instead treat them as containers that hold the initial value and their \emph{adjoints}, 
+In fact, rather than treating $x_i$ as nodes of the expression graph,
+it is more helpful to instead treat them as containers 
+that hold the initial value and their \emph{adjoints}, 
 i.e.\ $\frac{\partial f}{\partial x_i}$.
 For this reason, we denote the path between $x_i$ and $w_i$ with dotted lines,
 and consider only up to nodes $w_i$ in the expression tree.
@@ -115,16 +116,17 @@ and consider only up to nodes $w_i$ in the expression tree.
 \end{figure}
 
 The reverse-mode algorithm consists of two passes of the expression graph:
-\emph{forward}-evaluation, and \emph{backward}-evaluation.
+\emph{forward}-evaluation (not to be confused with forward-mode AD), 
+and \emph{backward}-evaluation.
 During the \emph{forward}-evaluation, we compute the expression in the usual fashion,
 i.e.\ start at the root, recursively forward-evaluate from left to right all of its children,
 then finally take those results and evaluate the current node.
-Evaluation of each node will simply compute the operation that it represents.
+Evaluation of each node will compute the operation that it represents.
 For example, after forward-evaluating the $w_1$ node, 
-which is a trivial operation of simply retrieving the value from the container $x_1$,
-the \verb|sin| node will return~$\sin(w_1) = \sin(x_1)$.
+which is a trivial operation of retrieving the value from the container $x_1$,
+the \code{sin} node will return~$\sin(w_1) = \sin(x_1)$.
 It is called forward-evaluation because if we unroll the recursive calls,
-we are simply starting from the leaves of the expression tree
+we are starting from the leaves of the expression tree
 and moving towards the root to get the full expression value.
 
 The \emph{backward}-evaluation for a given node starts by receiving its adjoint from its parent.
@@ -134,10 +136,8 @@ the root of the expression tree will receive the value $ \frac{\partial f}{\part
 Using this seed, the node computes the correct seed for all its children and 
 backward-evaluates from \emph{right-to-left}, the opposite direction of forward-evaluation.
 This is because in general for a given node, forward-evaluating child $i$ may depend
-on the changed states of children~$1,\ldots,i-1$ subtrees after their forward-evaluation.
-For example, imagine a node where child $1$ represents an expression that 
-assigns some other sub-expression into a variable $t$ and child $2$ depends on this value $t$.
-Child $ 2$ must update the adjoint for $t$ before backward-evaluating the sub-expression it represents.
+on the changed states of children~$1,\ldots,i-1$ subtrees after their forward-evaluation
+(see Section~\ref{ssec:eq} for an example).
 
 The correct seed for each child is computed by a simple chain-rule.
 Assuming the current node is represented by $w \in \R$ and one of its children is $v \in \R$,
@@ -147,8 +147,8 @@ the seed for $v$ is
     \frac{df}{dw} \frac{\partial w}{\partial v} \label{eq:next-seed}
 \end{align}
 Each node $w$ has node-specific information to compute $\frac{\partial w}{\partial v}$.
-For example, for the \verb|log| node in Fig.~\ref{fig:expr-tree-example},
-with $w$ as \verb|log| and $v$ as $w_4$,
+For example, for the \code{log} node in Fig.~\ref{fig:expr-tree-example},
+with $w$ as \code{log} and $v$ as $w_4$,
 \begin{align*}
     \frac{\partial w}{\partial v} = \frac{d\log(w_4)}{dw_4} = \frac{1}{w_4}
 \end{align*}
@@ -158,8 +158,8 @@ In general, if $v \in \R^{m \times n}$ and $w \in \R^{p \times q}$, then
         \sum\limits_{k=1}^p \sum\limits_{l=1}^q 
         \frac{\partial f}{\partial w_{kl}} \frac{\partial w_{kl}}{\partial v_{ij}}
 \end{align*}
-Hence, if $v$ is a vector, then its seed will also be a vector of the same size ($\nabla_v f$),
-and if it is a matrix, its seed will be a matrix of the same size ($D_v f$).
+Hence, regardless of the shape or size of $v$, 
+its adjoint will always have the same size as its value.
 
 For nodes that have a reference back to the containers $x_i$, i.e.\ $w_1,\ldots,w_4$,
 they must increment the adjoints in the containers with their seed.

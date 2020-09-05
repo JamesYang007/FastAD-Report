@@ -1,6 +1,6 @@
 \subsection{Motivation}\label{ssec:motivation}
 
-The main motivations for our design are vectorization, lazy-evaluation, and lazy-allocation.
+The main motivations for our design are to employ vectorization, lazy-evaluation, and lazy-allocation.
 Each of these topics are further elaborated below.
 As it turns out, expression template is the perfect tool that achieves
 all of these strategies.
@@ -10,10 +10,10 @@ Typically, it is used to represent a computation tree to perform lazy evaluation
 We show in the later sections that expression templates can be further exploited
 to implement lazy allocation.
 As for vectorization, the goal is to reuse a well-polished and efficient
-matrix library such as \verb|Eigen| to create vectorized code.
+matrix library such as \code{Eigen} to create vectorized code.
 Others have noted that integrating another expression-template based matrix library 
-such as \verb|Eigen| into an AD system can be quite challenging~\cite{hogan:2014}
-and lead to unexpected memory-related problems~\cite{carpenter:2015}.
+such as \code{Eigen} into an AD system can be quite challenging~\cite{hogan:2014}
+and lead to unexpected problems that require extra memory allocations to resolve~\cite{carpenter:2015}.
 However, once the AD system itself is fully based on expression-templates,
 one can easily integrate any such matrix library.
 For a full treatment of expression templates, 
@@ -24,16 +24,15 @@ we direct the reader to~\cite{vandevoorde:2002}.
 Vectorization refers to the parallelization of operations on multiple data at the hardware level 
 using specialized instructions called Single Instruction Multiple Data (SIMD) instructions.
 On a modern Intel 64-bit processor supporting AVX, one of the modern SIMD instruction sets,
-four double-precision floating point numbers can then be processed simultaneously,
+four double-precision floating point numbers can be processed simultaneously,
 roughly improving performance by a factor of four.
 While the compiler optimization is able to vectorize a user's code sometimes, it is not guaranteed
 because vectorization requirements are quite stringent. 
-For example, memory access must be done in a contiguous fashion, 
-there cannot be any race-conditions where this parallelization may write to the same memory region,
-and there cannot be any dependency between loop iterations.
-\todo{Cite Intel website?}.
-This makes it quite challenging to design an AD system that utilizes vectorization.
-However, it can make AD extremely fast, powerful, and practical even in complex problems.
+For example, vectorization is not guaranteed if memory access is not done in a contiguous fashion
+and is impossible if there is any dependency between loop iterations.
+This makes it quite challenging to design an AD system that 
+can always predict compiler optimization to create vectorized code.
+However, vectorization can make AD extremely fast, powerful, and practical even in complex problems.
 In practice, we come across many examples where operations can be vectorized during gradient computation.
 For example, matrix multiplication, any reduction from a multi-dimensional variable to a scalar such as
 summation or product of all elements, and any unary and binary function that is applied element-wise such as
@@ -43,11 +42,11 @@ exponential, logarithm, power, sin, cos, tan, and the usual arithmetic operators
 
 Lazy evaluation refers to the design pattern of delaying any computation until the moment that it is needed.
 Often times, this method is used to reduce the number of temporary variables during the computation.
-The prototypical example is a matrix library such as \verb|Eigen| \todo{cite}.
+The prototypical example is a matrix library such as \code{Eigen}~\cite{eigen:2010}.
 If an operation between two matrices always returned another matrix, 
 this would easily cause both memory thrashing and fragmentation.
-Instead, it is more prudent to return a cheap object that simply remembers \emph{how} to evaluate the computation,
-and only when the evaluation needs to occur, allocate a matrix object one-time, 
+Instead, it is more prudent to return a cheap object that only remembers \emph{how} to evaluate the computation,
+and only when the evaluation needs to occur, one-time allocate a matrix object, 
 evaluate the computation, and store the result in that object.
 AD evaluations will inevitably require matrix operations if we are to create a system
 general enough to differentiate with respect to vectors or matrices,
@@ -59,43 +58,46 @@ the memory-related steps from the actual forward-evaluation step,
 which are usually combined into one step in other libraries.
 This leads to the idea of lazy allocation, which is discussed in the next section.
 As for backward-evaluation, one can lazily compute the next seed for a given node's children.
-After the forward-evaluation of a node $w$, 
+After forward-evaluating node $w$, 
 one could eagerly compute and save $\frac{\partial w}{\partial v}$
 in Eq.~\ref{eq:next-seed} and during the backward-evaluation 
 compute $\frac{\partial f}{\partial w} \frac{\partial w}{\partial v}$,
 however, this is less efficient than 
-computing $\frac{\partial f}{\partial w} \frac{\partial w}{\partial v}$ as a whole,
+computing $\frac{\partial f}{\partial w} \frac{\partial w}{\partial v}$ as a whole
+during backward-evaluation,
 since unnecessary computations may be carried out
 and the product can usually be combined into fewer steps~\cite{carpenter:2015}.
 
 \subsubsection{Lazy Allocation}\label{sssec:lazy-alloc}
 
-We can take lazy evaluation even further in the context of AD to employ ``lazy allocation''.
-Similar to lazy evaluation, lazy allocation refers to delaying any \emph{memory allocations} until the moment that is it needed.
+We can take lazy evaluation even further in the context of AD to employ lazy allocation.
+Similar to lazy evaluation, lazy allocation delays any \emph{memory allocations}.
 Based on the algorithm described in Section~\ref{sec:reverse},
-we have no choice but to save the intermediate values for all expression nodes $w$
+we have no choice but to save the intermediate values and adjoints for all expression nodes $w$
 because $\frac{\partial f}{\partial w}$ is, in general, a function of $w$ (see Eq.~\ref{eq:next-seed})
-and is only computed during backward-evaluation after \emph{all} forward-evaluations have been completed.
+and is only computed during backward-evaluation after \emph{all} forward-evaluations are completed.
 While this allocation of temporary values and adjoints is inevitable,
 it can be done one-time in a contiguous manner, allocating the \emph{exact} number of bytes necessary,
 prior to the forward-evaluation.
 Moreover, this memory region can be reused for subsequent AD evaluations.
-A priori, an expression tree should not manage any memory regarding these intermediate values and adjoints,
-meaning each expression node does not necessarily have to contain an object that stores them.
-During the AD evaluation, the expression tree simply needs access to 
-the values and adjoints, but their actual memory location is irrelevant.
-Moreover, each expression node knows the exact number of values and adjoints it needs.
+
+An expression tree should not allocate any memory for the values and adjoints.
+It is only important that each expression node knows 
+the number of values and adjoints it needs to view
+and where they are in memory.
+Note that every node can compute the exact number of values and adjoints.
 For example, any unary function on a variable of shape $m \times n$ 
-will always imply the same shape for its value and adjoint (see Section~\ref{sec:reverse}).
+will always have the same shape (see Section~\ref{sec:reverse}).
 A more non-trivial example would be matrix multiplication.
 If its arguments are $A \in \R^{m \times p}, B \in \R^{p \times n}$, then
-the expression node knows that the value and adjoint shape is $m \times n$.
-Hence, the full expression tree can (lazily) compute the exact number of values and adjoints
-needed to carry out the full AD evaluation by summing up the sizes required for each individual node.
+the node's shape is $m \times n$.
+Hence, the full expression tree can compute the exact number of values and adjoints
+by summing up the sizes required for each individual node.
 When the user is ready to carry out the AD evaluation, 
-they can compute the necessary sizes by consulting the expression object,
-one-time allocate memory with those sizes, and
-bind the expression to view this region of memory.
-This will become clearer in Sections~\ref{ssec:var_view} and~\ref{ssec:unary}
-and is the key idea to reducing memory consumption in AD, 
-as will be discussed further in Section~\todo{Related works?}.\@
+they can compute the necessary sizes for value and adjoint by consulting the expression object,
+one-time allocate memory for the two, and
+bind the expression such that each node views some region of that memory.
+By design, since each node promises to view exactly the amount it requests, no memory is wasted.
+This will become clearer in Sections~\ref{ssec:var_view} and~\ref{ssec:unary} once we look at the code.
+This is the key idea to reducing memory consumption
+and will be discussed further in Section~\ref{sec:related}.\@

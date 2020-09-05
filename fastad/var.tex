@@ -1,8 +1,8 @@
-\subsection{Class Var}
+\subsection{Class Var}\label{ssec:var}
 
-We briefly mention a wrapper class of \verb|VarView| called \verb|Var|.
+We briefly mention a wrapper class of \code{VarView} called \code{Var}.
 If the user does not need such fine control of memory as described in Section~\ref{ssec:var_view},
-they can use \verb|Var|, which will internally allocate memory for its values and adjoints at construction.
+they can use \code{Var}, which will internally allocate memory for its values and adjoints at construction.
 The following is a simplified definition for scalar shapes:
 \begin{lstlisting}[style=customcpp]
 template <class ValueType>
@@ -18,8 +18,8 @@ private:
     value_t adj_;
 };
 \end{lstlisting}
-Note that \verb|Var| inherits from \verb|VarView| and 
-it is not an AD expression since it does not derive from \verb|ExprBase|.
+Note that \code{Var} inherits from \code{VarView} and 
+it is not an AD expression since it does not derive from \code{ExprBase}.
 This is a deliberate design choice and will be discussed further in Section~\ref{ssec:unary}.
-At construction, the base class \verb|VarView| 
-views the memory for the values and adjoints allocated in \verb|Var|.
+At construction, the base class \code{VarView} 
+views the memory for the values and adjoints allocated in \code{Var}.

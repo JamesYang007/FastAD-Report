@@ -22,7 +22,7 @@ however, the modified range of values for $N$ still shows a meaningful trend.
 We also tested $N$ larger than $2^{14}$ since it was not enough to show any convergent behavior.
 All libraries except Adept and Stan were excluded from this benchmark
 because they did not provide suitable support for matrix multiplication
-and the default overload using \verb|Eigen| API exceeded the time limit.
+and the default overload using \code{Eigen} API exceeded the time limit.
 All tested libraries provide built-in functions to 
 compute the matrix multiplication and sum the elements.
 Fig.\ref{fig:matrix_mult} shows the benchmark results.

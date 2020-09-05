@@ -14,26 +14,57 @@ The following is one example of how this can be done:
     std::cout << x3.get_adj() << std::endl; // print df/dx3
 \end{lstlisting}
 The user first declares AD variables to represent the independent variables.
-The second template parameter of \verb|Var| describes the general shape of the variable.
-\verb|scl| represents a scalar.
+In analogy to Fig.~\ref{fig:expr-tree-example}, the declared \code{xi} variables
+correspond to the gray $x_i$ containers in the figure and the \code{xi}
+that are used during the expression construction correspond to $w_i$ nodes in the figure.
+The second template parameter of \code{Var} describes the general shape of the variable.
+\code{scl} represents a scalar.
 Then the user creates the expression for the function that they want to differentiate.
 The way we construct expressions is very different from most AD libraries.
 When the expression is constructed, it does not forward-evaluate.
+In fact, no memory for values and adjoints for the intermediate expression nodes is even allocated.
 Rather, it returns a cheap, stack-allocated object that stores information
 about \emph{how} to evaluate this expression --- this is made possible through expression templates.
-The expression is wrapped with a call to \verb|ad::bind|,
-which will create a wrapper class of the underlying expression binding it
-to a region of memory for the values and adjoints of the intermediate expression nodes.
-In analogy to Fig.~\ref{fig:expr-tree-example}, the declared \verb|xi| variables
-correspond to the gray $x_i$ containers in the figure and the \verb|xi|
-that are used during the expression construction correspond to $w_i$ nodes in the figure.
-\verb|autodiff| is the function that forward and backward-evaluates an expression.
-It returns the forward-evaluated value (function value)
-and the gradient will be stored in the containers \verb|xi|.
-The user can retrieve these values by using the member function \verb|get_adj|.
+The expression is then wrapped with a call to \code{ad::bind},
+which will create a wrapper class of the expression object
+that does something like the following:
+\begin{lstlisting}[style=customcpp]
+    std::vector<double> val_buf, adj_buf;
+    auto expr = ad::sin(x1) + ad::cos(x2) * x3 - ad::log(x3);
+    util::SizePack size_pack = expr.bind_cache_size();
+    val_buf.resize(size_pack[0]);
+    adj_buf.resize(size_pack[1]);
+    expr.bind({val_buf.data(), adj_buf.data()});
+\end{lstlisting}
+We refer to the memory region allocated for values and adjoints for
+expression nodes as the \emph{cache}.
+Note that this does not include the value and adjoint region 
+for the independent variables and its viewers,
+e.g. $x_i$ and $w_i$ in Fig.~\ref{fig:expr-tree-example}.
+\code{bind\_cache\_size} is a member implemented by every expression node
+and computes the number of value and adjoint elements
+needed for the subtree starting at that current node.
+It returns a \code{SizePack} object that contains two unsigned long integers
+that represent the value and adjoint sizes.
+This tells us exactly how much to allocate for the values and adjoints 
+for the entire expression tree.
+\code{bind\_cache} takes in a pointer pack object,
+which can be constructed using an initializer list,
+and binds each expression node to view 
+a region of the value and adjoint buffer starting from the given pointers.
+The binding follows a simple pattern:
+the pointer pack contains the first unbound memory location and 
+the current node must view a certain number of elements from this starting point.
+The node then returns a new pack where the pointers are incremented with however much was taken.
+This process defines our lazy allocation strategy.
 
-The following is another example using \verb|VarView|,
-which, unlike \verb|Var|, does not own any storage for its value and adjoint,
+\code{autodiff} is our built-in function that forward and backward-evaluates an expression.
+It returns the forward-evaluated (function) value
+and the gradient will be stored in the containers \code{xi}.
+The user can retrieve these values by using the member function \code{get\_adj}.
+
+The following is another example using \code{VarView},
+which, unlike \code{Var}, does not own any storage for its value and adjoint,
 but rather views external memory regions for these quantities.
 \begin{lstlisting}[style=customcpp]
     std::vector<double> val_buf(3), adj_buf(3);
@@ -45,7 +76,7 @@ but rather views external memory regions for these quantities.
                                     adj_buf.data()+2);
     // rest is same...
 \end{lstlisting}
-Each \verb|xi| views the $i$th element of \verb|val_buf| and \verb|adj_buf|.
+Each \code{xi} views the $i$th element of \code{val\_buf} and \code{adj\_buf}.
 
 Finally, although multi-dimensional shapes are supported with the intention of
 performing vectorized operations, one can certainly use it in this context as well:
@@ -58,12 +89,12 @@ performing vectorized operations, one can certainly use it in this context as we
     std::cout << f << std::endl;
     std::cout << x.get_adj() << std::endl; // print full gradient
 \end{lstlisting}
-Note that \verb|x| is declared with a vector-shape (\verb|vec|).
+Note that \code{x} is declared with a vector-shape (\code{vec}).
 The size must be known at the time of construction.
 We provide a subscript-operator for vector-shapes
 that makes it convenient to construct the same expression as before.
-The adjoint of \verb|x| is the gradient and 
-is represented as an \verb|Eigen| matrix-like object,
-hence the user can easily interface with this adjoint by using \verb|Eigen| API.\@
-For example, \verb|Eigen| matrix objects can be passed to \verb|std::cout|
+The adjoint of \code{x} is the full gradient and 
+is represented as an \code{Eigen} matrix-like object,
+hence the user can easily interface with this adjoint by using \code{Eigen} API.\@
+For example, \code{Eigen} matrix objects can be passed to \code{std::cout}
 to print out all of the elements.

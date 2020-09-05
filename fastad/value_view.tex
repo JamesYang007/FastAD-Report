@@ -1,32 +1,28 @@
 \subsection{Class ValueView}\label{ssec:value_view}
 
-The first class template we discuss is \verb|ValueView|.
+The first class template we discuss is \code{ValueView}.
 As mentioned in Section~\ref{sssec:lazy-alloc},
 every expression node simply needs to view a region of memory as its value and adjoint.
 More generally, this leads to creating a class that views some memory region
 and exposes a useful API for the expression nodes.
-The following is the forward-declaration of \verb|ValueView|:
+The following is the forward-declaration of \code{ValueView}:
 \begin{lstlisting}[style=customcpp]
     template <class ValueType, class ShapeType>
     struct ValueView;
 \end{lstlisting}
-\verb|ValueType| indicates the underlying value type, which is usually \verb|double|.
-\verb|ShapeType| indicates the general shape of the value.
-It must be one of \verb|ad::scl|, \verb|ad::vec|, or \verb|ad::mat| 
+\code{ValueType} indicates the underlying value type, which is usually \code{double}.
+\code{ShapeType} is a tag that indicates the general shape of the value.
+It must be one of \code{ad::scl}, \code{ad::vec}, or \code{ad::mat} 
 indicating scalar, vector, or matrix shape, respectively.
 This extra shape information has proven to be very helpful in making compile-time optimizations
 (see Section~\ref{ssec:normal_log_pdf}).
 
-The following is a simplified version of \verb|ValueView| specialized for scalars and vectors.
+The following is a simplified version of \code{ValueView} specialized for scalars and vectors.
 We omit the specialization for matrices since it is very similar to that of vectors:
 \begin{lstlisting}[style=customcpp]
 template <class ValueType>
 struct ValueView<ValueType, scl>
 {
-    using value_t = ValueType;
-    using shape_t = scl;
-    using var_t = value_t;
-
     ValueView(value_t* begin, size_t=1, size_t=1)
         : val_(begin) {}
 
@@ -43,10 +39,6 @@ private:
 template <class ValueType>
 struct ValueView<ValueType, vec>
 {
-    using value_t = ValueType;
-    using shape_t = vec;
-    using var_t = util::shape_to_raw_view_t<value_t, shape_t>;
-
     ValueView(value_t* begin, size_t rows, size_t=1)
         : val_(begin, rows)
     {}
@@ -64,31 +56,23 @@ private:
     var_t val_;
 };
 \end{lstlisting}
-
-A few typedefs are saved to remember the value, shape, and variable type.
-\verb|var_t| will always refer to the type that \verb|get()| should return.
-The helper metaprogramming tool \verb|shape_to_raw_view_t| will resolve into
-the correct variable type using the value and shape type.
-For scalars, \verb|var_t| is simply the same as \verb|value_t|.
-For vectors and matrices, \verb|var_t| will be some form of \verb|Eigen::Map|.
-\verb|Eigen::Map| is an object that can view a region of memory as a vector or a matrix.
-All \verb|Eigen| API can then be reused such as 
-matrix multiplication, vectorized unary operation, etc.
-
 Note that the constructor always takes in two size parameters.
 This is to keep the API consistent for all specializations.
-\verb|begin| points to the beginning of the memory that we wish to view
+\code{begin} points to the beginning of the memory that we wish to view
 and is used to bind the underlying pointer.
-\verb|get| will always return a reference to the ``whole value''.
+\code{get} will always return a reference to the ``whole value''.
 In the case of scalar, the whole value is simply the first value.
 However, in the case of vector or matrix shape, the whole value is the vector or the matrix.
-\verb|bind| allows the object to lazily rebind to a memory region
-starting at \verb|begin| and always returns the pointer to the next unbound location.
+\code{bind} allows the object to lazily rebind to a memory region
+starting at \code{begin} and always returns the pointer to the next unbound location.
 This will play a critical role in employing lazy allocation (see Section~\ref{sssec:lazy-alloc}).
 In the scalar case, since it only views one value, 
-it will first save the pointer \verb|begin| and return \verb|begin + 1|.
+it will first save the pointer \code{begin} and return \code{begin + 1}.
 In the vector and matrix case, it will save the pointer 
-using the overloaded \verb|new| operator for \verb|Eigen::Map| objects and return \verb|begin + size|,
-where \verb|size| is the total number of elements.
-Note that \verb|new| does not heap-allocate for \verb|Eigen::Map| objects, 
+using the overloaded \code{new} operator for \code{Eigen::Map} objects and return \code{begin + size},
+where \code{size} is the total number of elements.
+\code{Eigen::Map} is an object that can view a region of memory as a vector or a matrix.
+The benefit is that \code{Eigen} API can then be reused such as 
+matrix multiplication, vectorized unary operation, etc.
+Note that \code{new} does not heap-allocate for \code{Eigen::Map} objects, 
 rather it just sets some pointers and integers.

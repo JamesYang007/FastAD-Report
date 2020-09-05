@@ -31,4 +31,5 @@ and it is well-known that reverse-mode is more efficient than forward-mode for t
 This is because in reverse-mode the gradient is directly computed by running the reverse-mode algorithm once,
 however, in the forward-mode, the \emph{directional derivative} is computed and hence requires 
 $n$ iterations, where $n$ is the input size, of the forward-mode algorithm to compute each of the partial derivatives.
-For these reasons, this paper will focus only on reverse-mode and computing gradients rather than a full Jacobian matrix.
+For these reasons, this paper will focus only on reverse-mode and computing gradients 
+rather than forward-mode and computing a full Jacobian matrix.

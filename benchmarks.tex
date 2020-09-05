@@ -1,6 +1,8 @@
 \section{Benchmarks}\label{sec:benchmark}
 
-In this section, we compare performances of various libraries against FastAD for a range of examples.
+In this section, we compare performances of 
+various libraries against FastAD for a range of examples\footnotemark.
+\footnotetext{github page: https://github.com/JamesYang007/ADBenchmark}
 The following is an alphabetical list of the libraries used for benchmarking:\@
 \begin{itemize}
     \item \href{http://www.met.reading.ac.uk/clouds/adept/}{Adept 2.0.8}
@@ -11,7 +13,7 @@ The following is an alphabetical list of the libraries used for benchmarking:\@
     \item \href{https://github.com/stan-dev/math}{Stan Math Library 3.3.0}
 \end{itemize}
 All of the libraries are at their most recent release.
-Note that these libraries have also been used by others for 
+These libraries have also been used by others for 
 benchmarking~\cite{carpenter:2015}\cite{margossian:2018}\cite{hogan:2014}.
 
 The benchmark configuration is as follows:
@@ -31,25 +33,24 @@ The benchmark configuration is as follows:
     -DEIGEN_MATRIXBASE_PLUGIN="stan/math/prim/eigen_plugins.h" 
     -DEIGEN_ARRAYBASE_PLUGIN="stan/math/prim/eigen_plugins.h"
 \end{verbatim}
-    \item \textbf{FastAD Dependency}: \verb|Eigen3.3.7|
+    \item \textbf{FastAD Dependency}: \code{Eigen3.3.7}
 \end{itemize}
 While we used the newest GCC compiler, there is nothing in FastAD that relies on GCC10 specifically.
 FastAD, however, requires the C++17 standard.
-The \verb|-O3| indicates maximum level of compiler optimization,
-and \verb|-march=native| exposes all of the available instruction sets 
+The \code{-O3} indicates maximum level of compiler optimization,
+and \code{-march=native} exposes all of the available instruction sets 
 such that the compiler can choose the best one.
 The preprocessor definitions are to disable debugging
 for best performance for all libraries, and some definitions were required by the libraries in order to compile.
-Finally, FastAD has a dependency on \verb|Eigen| matrix library,
-but we note that this is also a dependency for Stan.
-The only application running was \verb|iTerm2| (terminal),
+Finally, FastAD has a dependency on \code{Eigen} matrix library,
+but this is also a dependency for Stan.
+The only application running was \code{iTerm2} (terminal),
 the benchmark program, and system-related applications.
 
 Compile time was not rigorously benchmarked, 
-although we do note that adding code for Stan did, in fact,
-increase compile time dramatically, which was also observed in~\cite{carpenter:2015}.
-This is likely due to the fact that Stan has numerous large dependencies
-such as Boost, Eigen, Sundial, and TBB.
+although we do note that adding code for Stan
+increased compile time dramatically, which was also observed in~\cite{carpenter:2015}.
+This is likely because Stan has numerous large dependencies such as Boost, Eigen, Sundial, and TBB.\@
 
 All benchmarks benchmark the case where a user wishes to differentiate
 a scalar function $f$ for different values of $x$.
@@ -65,7 +66,7 @@ Our benchmark drivers are very similar to the one presented by Carpenter~\cite{c
 In fact, we mainly took the same benchmark drivers, abstracted some details, and added a few more tests.
 Every function to differentiate is defined as a functor and receives a single input,
 which is a vector-like object of AD variables representing $x$.
-For example, the \verb|sum| functor is as follows:
+For example, the \code{sum} functor is as follows:
 \begin{lstlisting}[style=customcpp]
 struct SumFunc
 {
@@ -96,25 +97,26 @@ struct SumFunc
     }
 };
 \end{lstlisting}
-All functors overload \verb|operator()| to take in library-specific vector of AD variables.
-Adept2.0 supports their own array feature and encourages the use of \verb|aVector|.
-FastAD supports the AD variable to have a vector-like shape by specifying the second template parameter as \verb|ad::vec|.
-All other libraries support a direct interface with~\verb|Eigen::Matrix<AD variable type>|.
+All functors overload \code{operator()} to take in library-specific vector of AD variables.
+Adept2.0 supports their own array feature and encourages the use of \code{aVector}.
+FastAD supports the AD variable to have a vector-like shape by specifying the second template parameter as \code{ad::vec}.
+All other libraries support a direct interface with~\code{Eigen::Matrix<AD variable type>}.
 Some libraries provide built-in functions to evaluate the functor, and so we specialize whenever that is the case
 to call these functions instead of performing the default (first) overload.
-The default overload will always try to use \verb|Eigen| API instead of manually written for-loops, as shown above.
-However, if a function cannot be easily written with \verb|Eigen| API, then a manually written code is used.
-Note that the default overload for a vector of doubles will compute only the forward-evaluation,
-and this will serve as a baseline for all benchmarks.
+The default overload will always try to use \code{Eigen} API instead of manually written for-loops, as shown above.
+However, if a function cannot be easily written with \code{Eigen} API, then a manually written code is used.
+Every benchmark times the default overload for a vector of \code{double}s,
+which will compute only the forward-evaluation, and this will serve as a baseline for all benchmarks.
+This baseline will be denoted as \code{double} in the figures.
 This approach was also used in~\cite{carpenter:2015},
-however in our benchmark, this overload for doubles is optimized to be vectorized,
+however in our benchmark, the baseline is optimized to be vectorized,
 whereas the reference uses a manual for-loop that may not be.
 Hence, our results for all libraries with respect to the baseline may differ from those of the reference.
-\verb|name| returns an \verb|std::string| object with a short name of the functor
-and \verb|fill| fills the initial values prior to starting any benchmarks. 
+\code{name} returns an \code{std::string} object with a short name of the functor
+and \code{fill} fills the initial values prior to starting any benchmarks. 
 
 For brevity, the following is only a snippet of our main
-benchmark function~\verb|time_gradients| that benchmarks Adept:
+benchmark function~\code{time\_gradients} that benchmarks Adept:
 \begin{lstlisting}[style=customcpp]
     auto& adept_pack = packs.at(adb::TestName::adept);
     if (adept_pack.run) {
@@ -128,32 +130,31 @@ benchmark function~\verb|time_gradients| that benchmarks Adept:
         adept_pack.time = sw.elapsed() / adept_pack.n_iter;
     }
 \end{lstlisting}
-Other libraries are benchmarked in a similar way with \verb|adept| replaced with the other library names.
-\verb|packs| is an \verb|std::unordered_map| mapping \verb|TestName| enum value to a \verb|TestPack| object
+Other libraries are benchmarked in a similar way with \code{adept} replaced with the other library names.
+\code{packs} is an \code{std::unordered\_map} mapping \code{TestName} enum value to a \code{TestPack} object
 which contains information such as name of library, number of iterations to run, whether to run or not, etc.
 This abstraction was only done to ease the programming and has no bearing on the actual benchmark results.
-The caller guarantees to populate \verb|packs| with information for all libraries.
-The first line grabs the \verb|TestPack| object associated with Adept and checks if it should be run.
-If so, it allocates an (active) Adept vector, which represents the AD variables.
-The object \verb|sw| is previously declared (not shown) as \verb|StopWatch<>| and it is used as a stopwatch.
-\verb|StopWatch<>| is our own class that wraps \verb|std::chrono::steady_clock| to measure interval time.
-The member function \verb|start()| saves the starting time point and \verb|end()| saves the ending time point.
-Member function \verb|elapsed()| returns the time elapsed in seconds between \verb|begin()| and \verb|end()| calls.
+The first line grabs the \code{TestPack} object associated with Adept and checks if it should be run.
+If so, it allocates a vector of AD variables.
+The object \code{sw} is previously declared (not shown) as \code{StopWatch<>} and it is used as a stopwatch.
+\code{StopWatch<>} is our own class that wraps \code{std::chrono::steady\_clock} to measure interval time.
+The member function \code{start()} saves the starting time point and \code{end()} saves the ending time point.
+Member function \code{elapsed()} returns the time elapsed in seconds between \code{begin()} and \code{end()} calls.
 The elapsed time is computed in nanoseconds and then scaled by $10^{-9}$ to convert into seconds.
-We measure the time it takes to differentiate \verb|f|, \verb|adept_pack.n_iter| times,
-with the input \verb|x| and the AD variable \verb|x_ad|,
-store the function result into \verb|fx|, and save the gradient in \verb|grad_fx|.
-For all benchmark examples, \verb|n_iter| is actually the same for all libraries and is set to 10000,
+We measure the time it takes to differentiate \code{f}, \code{adept\_pack.n\_iter} times,
+with the input \code{x} and the AD variable \code{x\_ad},
+store the function result into \code{fx}, and save the gradient in \code{grad\_fx}.
+For all benchmark examples, \code{n\_iter} is actually the same for all libraries and is set to 10000,
 but for matrix multiplication, it is set to 1000 
 since the complexity of the function was large enough to reach stable results with fewer iterations.
-\verb|f| is the functor representing the function to differentiate,
+\code{f} is the functor representing the function to differentiate,
 which was previously described in detail.
-The function \verb|check_gradient| is for our debugging purposes to check accuracy.
+The function \code{check\_gradient} is for our debugging purposes to check accuracy.
 Note that it is only called after the stopwatch finishes, so it does not affect the benchmark results.
 All libraries had some numerical issues for some of the examples,
 but the maximum proportion of error to the actual gradient values was on the order of $ 10^{-15}$, which is negligible.
 Hence, in terms of accuracy, all libraries were equally acceptable.
-Finally, we save the average time into \verb|adept_pack.time|.
+Finally, we save the average time into \code{adept\_pack.time}.
 
 Because FastAD works very differently from all of these libraries,
 the benchmark setup is quite different:
@@ -179,26 +180,14 @@ the benchmark setup is quite different:
         fastad_pack.time = sw.elapsed() / fastad_pack.n_iter;
     }
 \end{lstlisting}
-Unlike all other libraries, calling the functor with \verb|x_ad| will not forward-evaluate.
-Rather, it returns a small-sized, stack-allocated expression tree 
-(usually only a couple hundred bytes for complicated examples and only tens of bytes for moderate examples).
-The analogous structure would be the ``tape'' for ADOL-C and CppAD,
-or the stack structure in Adept and Stan.
-As mentioned in section~\todo{the one about lazy allocation},
-FastAD employs lazy allocation, and so once the expression tree has been created,
-we can one-time lazily allocate the \emph{exact} number of bytes for the values and adjoints
-associated with the expression nodes, and reuse this memory when evaluating the same expression multiple times.
-We then bind the expression object to view this region of memory.
-All of these operations are very cheap and fast.
-No data is copied and there are only pointer assignments.
-The rest of the logic remains the same.
+Section~\ref{ssec:example} already discussed the above code in detail.
 
-We defined a gradient-computing function such as \verb|adept_gradient| for every library except for Stan,
+We defined a gradient-computing function such as \code{adept\_gradient} for every library except for Stan,
 since they already provided their own.
 The code is exactly the same as the one used by Carpenter~\cite{carpenter:2015},
 except that the allocations for the AD variables have been moved to before starting the stopwatch as shown above for Adept.
 So, we do not show the code for these functions and 
-direct the reader to the reference and \todo{our github page}.
+direct the reader to the reference and the github page.
 As for FastAD, the gradient function is extremely simple:
 \begin{lstlisting}[style=customcpp]
     template <class ExprType>

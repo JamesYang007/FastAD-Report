@@ -9,11 +9,12 @@ large memory consumptions,
 lack of inlining, 
 and an unnecessary overhead of managing the expression graph at run-time.
 This paper introduces FastAD, a new C++ template library for automatic differentiation,
-that overcomes all of these flaws in existing libraries by using
+that overcomes all of these challenges in existing libraries by using
 a fully expression template based design,
 lazy-evaluation,
-and lazy-allocation.
-Moreover, we show that new C++17 template metaprogramming tools can 
+and lazy-allocation strategies.
+Moreover, we show that C++17 template metaprogramming tools can 
 make further optimizations at compile-time to generate more efficient code.
-Benchmarks show that our unique design proves to be optimal in various settings,
+Benchmarks show that our unique design proves to be optimal in various settings
+including a few real-world examples,
 showing negligible overhead from a manually-written gradient computation.

@@ -1,8 +1,8 @@
 \subsection{Class VarView}\label{ssec:var_view}
 
-A \verb|VarView| object is an AD expression node
+A \code{VarView} object is an AD expression node
 that views the values and adjoints of an independent variable.
-In Fig.~\ref{fig:expr-tree-example}, the \verb|VarView| objects are precisely the $w_i$ nodes.
+In Fig.~\ref{fig:expr-tree-example}, the \code{VarView} objects are precisely the $w_i$ nodes.
 The following is a simplified definition of its base class, 
 which implements all of the important members:
 \begin{lstlisting}[style=customcpp]
@@ -34,53 +34,38 @@ struct VarViewBase<VarView<ValueType, ShapeType>>:
 };
 \end{lstlisting}
 
-\verb|VarView| inherits \verb|ValueAdjView| and hence views
+\code{VarView} inherits \code{ValueAdjView} and hence views
 a region for values and adjoints.
-The second base class \verb|ExprBase| utilizes Curiously Recurring Template Pattern (CRTP).
-This is a common technique to tag certain classes to unify various classes as one ``concept''
-\todo{find some reference for this?}.
+The second base class \code{ExprBase} utilizes Curiously Recurring Template Pattern (CRTP)~\cite{abrahams:2005},
+which is a common technique to tag classes to unify a collection of classes as one concept.
 Every expression node must implement the five member functions shown above.
-The member \verb|feval| represents the forward-evaluation.
-In the case for \verb|VarView| objects, 
-they simply need to retrieve and return the value that they represent.
-The member \verb|beval| represents the backward-evaluation.
+The member \code{feval} represents the forward-evaluation.
+For a \code{VarView} object, it just return its value.
+The member \code{beval} represents the backward-evaluation.
 As described in Section~\ref{sec:reverse}, 
 these nodes must increment the adjoints of the actual variables they reference.
-The helper function \verb|to_array| takes the argument and returns the ``array'' version.
+The helper function \code{to\_array} takes the argument and returns the ``array'' version.
 For scalars, it returns the argument itself.
-However, for \verb|Eigen| matrix-like objects, 
-it returns the result of calling \verb|x.array()|, where \verb|x| is the argument.
+However, for \code{Eigen} matrix-like objects, 
+it returns the result of calling \code{x.array()}, where \code{x} is the argument.
 The reason for this is that sometimes the seed may be a scalar
 when the adjoint may be a vector or a matrix.
-Unfortunately, \verb|Eigen| matrix-like objects do not play well with element-wise operations,
+Unfortunately, \code{Eigen} matrix-like objects do not play well with element-wise operations,
 and such API is only available for array-like objects.
 Note that the conversion from a matrix object to an array object 
 is cost-free (done at compile-time) and it only serves to expose a different API.\@
 
-The next three members define how lazy allocation is performed.
-We refer to the memory region allocated for values and adjoints for
-expression nodes as the \emph{cache}.
-Note that this does not include the value and adjoint region 
-for the independent variables and its viewers,
-e.g. $x_i$ and $w_i$ in Fig.~\ref{fig:expr-tree-example}.
-\verb|bind_cache_size| is a member that computes the number of value and adjoint elements
-needed for the subtree starting at the current expression node.
-\verb|single_bind_cache_size| is a member that computes the number of value and adjoint elements
-for the current expression node only (non-recursive).
-For a \verb|VarView| object,
+The purpose for the \code{cache}-related functions was detailed in Section~\ref{ssec:example}.
+For a \code{VarView} object, 
 since it has no children and it does not need to bind to any cache,
-it returns $ 0$ for both sizes as a \verb|SizePack|,
-which is a class that contains two unsigned long integers
-that represent the value and adjoint sizes.
-\verb|bind_cache| takes its argument,
-which will usually be a pointer pack object mentioned in Section~\ref{ssec:value_adj_view},
-and if cache is required for the current node,
-bind itself to view the value and adjoint region using the pointer pack
-and return the pack pointing to the next unbound location.
-In the case of \verb|VarView|, however, it just returns the argument back
-because it does not need to bind to any cache.
+\code{bind\_cache\_size} returns $ 0$ for both value and adjoint sizes,
+and \code{bind\_cache} returns the argument back.
+\code{single\_bind\_cache\_size} returns the number of values and adjoints required
+for the current expression node only (non-recursive) 
+(see Section~\ref{ssec:eq} for how this is used).
+This, too, returns $ 0$ for both sizes.
 
-\verb|VarView| objects are extremely useful because it gives the user full control 
+\code{VarView} objects are extremely useful because it gives the user full control 
 of the memory layout of the values and adjoints for the independent variables.
 Often times, a function consists of many different variables of various shapes,
 but the user wishes to collapse all of these variables into one long vector.
@@ -88,10 +73,10 @@ This usually occurs when each value needs to get updated by its adjoint,
 hence it is faster to take the vector of all values and update it with the entire adjoint vector at once.
 However, it is not intuitive to directly work with this collapsed vector,
 since the expression to construct is best defined with the separate independent variables.
-\verb|VarView| remedies this situation by adding a layer of abstraction.
-A user can prepare this collapsed vector and create different \verb|VarView|
+\code{VarView} remedies this situation by adding a layer of abstraction.
+A user can prepare this collapsed vector and create different \code{VarView}
 objects to view the correct parts of this vector.
-These \verb|VarView| objects can then create the expression.
+These \code{VarView} objects can then create the expression.
 An example code may look like the following:
 \begin{lstlisting}[style=customcpp]
     Eigen::VectorXd val(10);
@@ -113,6 +98,6 @@ An example code may look like the following:
 \end{lstlisting}
 
 After modifying the value vector, if the user wishes to differentiate with these new values,
-they can reuse the \verb|VarView| and the expression objects.
+they can reuse the \code{VarView} and the expression objects.
 The only catch is that the adjoint vector must be reset to 0 before differentiating again,
-since \verb|VarView| is defined to always increment the adjoints.
+since \code{VarView} is defined to always increment the adjoints.

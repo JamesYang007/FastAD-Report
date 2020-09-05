@@ -1,13 +1,13 @@
 \section{FastAD Implementation}\label{sec:fastad}
 
-In this section, we cover some of the key ideas of our implementation.
-In Section~\ref{ssec:example}, we show an example program using FastAD
+In this section, we cover some of the key ideas of our implementation\footnotemark.
+\footnotetext{github page: https://github.com/JamesYang007/FastAD}
+In Section~\ref{ssec:example}, we first show an example program using FastAD
 differentiating Eq.~\ref{eq:f-example} to get an intuition for how the library works.
-Section~\ref{ssec:motivation} motivates our design choices with desirable end-goals
-from a performance perspective such as vectorization, lazy-evaluation, and lazy-allocation,
-describing in detail what these strategies are,
-why they are useful in the context of automatic differentiation,
-and how they can be achieved.
+Section~\ref{ssec:motivation} motivates our design choices from a performance perspective, 
+introducing the concepts vectorization, lazy-evaluation, and lazy-allocation and
+describing in detail what these strategies are and
+why they are useful in the context of automatic differentiation.
 Sections~\ref{ssec:value_view}-\ref{ssec:eq} explore the most essential classes
 used to build an expression tree.
 Further, we explore exactly where vectorization, lazy-evaluation, and lazy-allocation occur.

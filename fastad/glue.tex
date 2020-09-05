@@ -37,13 +37,13 @@ The following is a simplified definition of the member functions only:
     { return {0,0}; }
 \end{lstlisting}
 The definition is extremely simple.
-A \verb|GlueNode| is defined to always view the right-expression's values and adjoints,
+A \code{GlueNode} is defined to always view the right-expression's values and adjoints,
 since in C++ the usual comma operator would only keep the right-expression value.
-\verb|feval| just forward-evaluates left-to-right and \verb|beval| backward-evaluates right-to-left.
+\code{feval} just forward-evaluates left-to-right and \code{beval} backward-evaluates right-to-left.
 One caveat is that only the right-expression is given the seed and the left-expression is seeded with 0.
 This is, again, because the node represents the right expression and hence differentiates only that expression.
-It is still consistent with all other nodes, including \verb|EqNode|.
+It is still consistent with all other nodes, including \code{EqNode}.
 In the example in Section~\ref{ssec:eq}, the assignment expression is indeed seeded with 0.
-This does not mean that \verb|t| has an adjoint of 0.
-The backward-evaluation of the second expression will have first accumulated the adjoints for \verb|t|
-and when backward-evaluating the assignment expression, 0 gets accumulated to the adjoint.
+This does not mean that \code{t} has an adjoint of 0.
+The backward-evaluation of the second expression will have first accumulated the adjoints for \code{t}
+and when backward-evaluating the assignment expression, 0 gets \emph{accumulated} to the adjoint.
