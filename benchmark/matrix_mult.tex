@@ -29,7 +29,7 @@ Fig.\ref{fig:matrix_mult} shows the benchmark results.
 
 FastAD is still the fastest library for all values of $N$, 
 but Stan performs much closer to FastAD than in the previous examples.
-Adept consistently performs worse compared to FastAD and Stan.
+Adept seems to consistently take longer than both FastAD and Stan as $N$ increases.
 The trend stabilizes towards the end at around $N=2^{14}$ where 
 Stan is about $ 2$ times slower.
 For moderate sized $N \in [2^{8}, 2^{10}]$, Stan is about 3--4 times slower.
