@@ -118,22 +118,23 @@
 }
 
 \lstdefinestyle{customasm}{
-  language=C,
-  belowcaptionskip=1\baselineskip,
-  abovecaptionskip=0pt,
-  aboveskip=0pt,
-  %frame=L,
-  xleftmargin=\parindent,
-  %anguage=Assembler,
-  basicstyle=\footnotesize\ttfamily,
-  commentstyle=\itshape\color{mygreen},
-  keywordstyle=\bfseries\color{myblue!90},%
-  emphstyle=\bfseries\color{myblue!90},%
-  emph = {ld, st,dmb,cbz,ldax,cbnz,stx,cnbz,str,in},
-  breaklines=true,
-  tabsize=2,
-  boxpos=t,
-  numberstyle=\footnotesize\color{gray}\tt,
+    language=C,
+    belowcaptionskip=1\baselineskip,
+    abovecaptionskip=0pt,
+    aboveskip=0pt,
+    %frame=L,
+    xleftmargin=\parindent,
+    %anguage=Assembler,
+    basicstyle=\footnotesize\ttfamily,
+    commentstyle=\itshape\color{mygreen},
+    keywordstyle=\bfseries\color{myblue!90},%
+    emphstyle=\bfseries\color{myblue!90},%
+    emph = {ld, st,dmb,cbz,ldax,cbnz,stx,cnbz,str,in},
+    escapeinside={<@}{@>},
+    breaklines=true,
+    tabsize=2,
+    boxpos=t,
+    numberstyle=\footnotesize\color{gray}\tt,
 }
 
 %%%%%%%% USEFUL ALIASES FOR MATH %%%%%%%%

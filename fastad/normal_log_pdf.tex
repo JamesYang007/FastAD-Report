@@ -6,7 +6,7 @@ Hence, it is worth optimizing this expression node as much as possible.
 The current design of FastAD is already quite optimized for all nodes,
 but we show that we can make further compile-time optimizations to minimize computations.
 
-It is useful to have versions of log-pdf that drop any unnecessary constants,
+It is useful to have a version of log-pdf that drops any unnecessary constants,
 hence, we defined our normal log-pdfs to drop the $\sqrt{2\pi}$ constant.
 The following is the forward-declaration of the normal log-pdf node:
 \begin{lstlisting}[style=customcpp]
@@ -33,7 +33,7 @@ we can choose the specialization of this node at compile-time and
 generate code specific to that particular combination.
 At run-time, there are no conditional statements to choose the correct code.
 It is worth writing different specializations because in most of the cases
-there are different opportunities to save computations.
+there are different opportunities to save different computations.
 
 The following is a simplified version of the specialization 
 for when $x$ is a vector and $\mu, \sigma$ are scalars, 
@@ -99,7 +99,7 @@ If $x$ is constant, we can actually compute the log-pdf in a different way:
 \end{align}
 This is helpful because we can one-time evaluate $\sum\limits_{i=1}^n (x_i - \bar{x})^2$ and $\bar{x}$.
 These values can then be reused for multiple evaluations and now the complexity of log-pdf
-reduced from an $O(n)$ operation to $O(1)$.
+reduces from an $O(n)$ operation to $O(1)$.
 The forward-evaluation reflects this logic.
 If $\sigma$ is not a constant, it must re-evaluate $\log(\sigma)$ 
 since the value may have changed across multiple evaluations.

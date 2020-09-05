@@ -2,7 +2,7 @@
 
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=\textwidth]{figs/normal_log_pdf_fig.png}
+    \includegraphics[width=0.8\textwidth]{figs/normal_log_pdf_fig.png}
     \caption{%
         Normal log-pdf benchmark of other libraries against FastAD 
         plotted relative to FastAD average time.
@@ -11,7 +11,7 @@
 
 The normal log-pdf function is defined up to a constant:
 \[
-    f(x) = -\frac{1}{2} \sum\limits_{i=1}^N \paren{\frac{x_i - \mu}{\sigma}}^2 
+    f(x) = -\frac{1}{2\sigma^2} \sum\limits_{i=1}^N \paren{x_i - \mu}^2 
            -N\log(\sigma)
 \]
 For this benchmark, $\mu = -0.56,\,\sigma = 1.37$ and are kept as constants;
@@ -36,4 +36,5 @@ and Sacado about $ 198$ times.
 This difference is the largest we have seen so far,
 and this is largely due to how we compute $\log(\sigma)$.
 Section~\ref{ssec:normal_log_pdf} showed that when $\sigma$ is constant,
-the compiler generates code to compute $\log(\sigma)$ only once.
+the compiler generates code to compute $\log(\sigma)$ only once
+and gets reused over multiple AD evaluations with no other cost during runtime.

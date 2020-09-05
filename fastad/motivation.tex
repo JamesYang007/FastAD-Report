@@ -5,10 +5,11 @@ Each of these topics are further elaborated below.
 As it turns out, expression template is the perfect tool that achieves
 all of these strategies.
 Expression template is a template metaprogramming technique that 
-uses type information, and often times operator overloads, to represent a complex expression.
+uses type information, and often times operator overloads, to 
+construct structures that represent complex expressions at compile-time.
 Typically, it is used to represent a computation tree to perform lazy evaluation.
-We show in the later sections that expression templates can be further exploited
-to implement lazy allocation.
+Section~\ref{ssec:example} briefly mentioned how expression templates allow for
+lazy allocation.
 As for vectorization, the goal is to reuse a well-polished and efficient
 matrix library such as \code{Eigen} to create vectorized code.
 Others have noted that integrating another expression-template based matrix library 
@@ -78,26 +79,19 @@ because $\frac{\partial f}{\partial w}$ is, in general, a function of $w$ (see E
 and is only computed during backward-evaluation after \emph{all} forward-evaluations are completed.
 While this allocation of temporary values and adjoints is inevitable,
 it can be done one-time in a contiguous manner, allocating the \emph{exact} number of bytes necessary,
-prior to the forward-evaluation.
+prior to the forward-evaluation (see Section~\ref{ssec:example}).
 Moreover, this memory region can be reused for subsequent AD evaluations.
-
-An expression tree should not allocate any memory for the values and adjoints.
-It is only important that each expression node knows 
+The key observation is that an expression tree 
+does not need to allocate any memory for the values and adjoints;
+it is only important that each expression node knows 
 the number of values and adjoints it needs to view
-and where they are in memory.
+and where they are in memory, which can be provided lazily.
 Note that every node can compute the exact number of values and adjoints.
-For example, any unary function on a variable of shape $m \times n$ 
-will always have the same shape (see Section~\ref{sec:reverse}).
+For example, any unary element-wise function on a variable of shape $m \times n$ 
+will always return the same shape and size.
 A more non-trivial example would be matrix multiplication.
 If its arguments are $A \in \R^{m \times p}, B \in \R^{p \times n}$, then
-the node's shape is $m \times n$.
-Hence, the full expression tree can compute the exact number of values and adjoints
-by summing up the sizes required for each individual node.
-When the user is ready to carry out the AD evaluation, 
-they can compute the necessary sizes for value and adjoint by consulting the expression object,
-one-time allocate memory for the two, and
-bind the expression such that each node views some region of that memory.
-By design, since each node promises to view exactly the amount it requests, no memory is wasted.
-This will become clearer in Sections~\ref{ssec:var_view} and~\ref{ssec:unary} once we look at the code.
-This is the key idea to reducing memory consumption
-and will be discussed further in Section~\ref{sec:related}.\@
+the node's shape is a matrix of size $m \times n$.
+Section~\ref{ssec:example} described our lazy allocation strategy using these observations.
+The big benefit is that by design, 
+since each node promises to view exactly the amount it requests, no memory is wasted.

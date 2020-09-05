@@ -1,8 +1,9 @@
 \subsection{Vectorization}
 
-One big difference between Stan and FastAD is that 
-Stan rarely generates vectorized code.
-Upon closer inspection at the source code, 
+One big difference between FastAD and other libraries is that 
+FastAD generates more vectorized code for reasons that depend on the library.
+
+For Stan, upon closer inspection at the source code, 
 this is due to how they interface with \code{Eigen}.
 Unlike FastAD, Stan only creates a scalar AD variable class,
 which represents a value and adjoint pair,
@@ -20,14 +21,12 @@ To confirm this observation, we took the
 summation benchmark example in Section~\ref{ssec:sum_prod}
 and generated the assembly code using the compiler flags \code{-S -fverbose-asm}.
 We extracted the part of the assembly that performs the summation for Stan and FastAD.\@
-For brevity and formatting, 
-we remove some of the comments that were generated with the assembly.
-The following is the assembly for Stan:
+For brevity and formatting, we remove the comments that were generated with the assembly:
 \begin{lstlisting}[style=customasm]
 L3178:
     movq    (%rax), %rdx
     addq    $8, %rax
-    vaddsd  8(%rdx), %xmm0, %xmm0 
+    <@\textcolor{red}{vaddsd}@>   8(%rdx), %xmm0, %xmm0 
     cmpq    %rcx, %rax 
     jne L3178
 \end{lstlisting}
@@ -45,8 +44,8 @@ Compare the above assembly with the one generated for FastAD:
 \begin{lstlisting}[style=customasm]
  L3020:
      addq    $8, %rdx
-     vaddpd  (%rax), %ymm1, %ymm1   
-     vaddpd  32(%rax), %ymm0, %ymm0 
+     <@\textcolor{red}{vaddpd}@>  (%rax), %ymm1, %ymm1   
+     <@\textcolor{red}{vaddpd}@>  32(%rax), %ymm0, %ymm0 
      addq    $64, %rax
      cmpq    %rdx, %rcx 
      jg  L3020 
@@ -55,8 +54,7 @@ This portion of the assembly is indeed related to the \emph{linear vectorized tr
 specialization of the same \code{Eigen} class responsible for reduction operations.
 We see that the instruction used to add is \code{vaddpd},
 which is an AVX instruction to add \emph{packed} double-precision values.
-This is a vectorized instruction and the operation is done in parallel
-on four double-precision values.
+This is a vectorized instruction and the operation is done in parallel.
 
 Sometimes, Stan is able to produce vectorized code such as in matrix multiplication.
 This is consistent with our benchmark results because Stan was closest to FastAD
@@ -73,11 +71,8 @@ Internally, all matrix operations are carried out by calling BLAS routines direc
 This explains why for most of the benchmarks, Adept was the second fastest library
 because almost all of the benchmark examples required 
 reduction operations such as sum, product, and exponential.
-CppAD was also able vectorize some operations based on the assembly,
-however there were greater costs elsewhere that hid this benefit.
-Other libraries ended up using a plain for-loop with scalar instructions.
-
-In summary, memory layout is extremely important for vectorized code.
-In particular, it is very beneficial to have memory-aligned, 
-contiguous region of values
-and use \code{Eigen} objects with \code{double} value type for all computations.
+Matrix multiplication was an exception and
+the author of Adept notes that this operation is currently slow~\cite{hogan:2014}.
+CppAD was also able vectorize the summation example,
+however, there were greater costs elsewhere that hid this benefit.
+Other libraries did not produce vectorized code.

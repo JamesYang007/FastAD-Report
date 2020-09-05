@@ -1,12 +1,16 @@
 \section{Further Studies}
 
 FastAD is still quite new and 
-does not have full support for all commonly-used functions
-and probability density functions.
+does not have full support for all commonly-used functions,
+probability density functions,
+and matrix decompositions.
 While FastAD is currently optimized for CPU performance,
-its design can be extended to support GPU.\@
+its design can also be extended to support GPU.\@
 Having support for both processors will allow FastAD
 to be well-suited for extremely large-scale problems as well.
+Although computing hessian would be easy to implement in FastAD,
+generalizing to higher-order derivatives seems to pose a great challenge,
+and this feature could be useful in areas such as physics and optimization problems.
 Lastly, one application that could potentially benefit greatly from FastAD 
 is probabilistic programming language such as Stan,
 which heavily uses automatic differentiation for differentiating scalar functions.

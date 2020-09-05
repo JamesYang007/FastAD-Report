@@ -56,7 +56,9 @@ The binding follows a simple pattern:
 the pointer pack contains the first unbound memory location and 
 the current node must view a certain number of elements from this starting point.
 The node then returns a new pack where the pointers are incremented with however much was taken.
-This process defines our lazy allocation strategy.
+The total amount taken for each node must coincide with the \code{SizePack} object from before.
+This process defines our lazy allocation strategy
+since we allocate memory only when the full expression is known.
 
 \code{autodiff} is our built-in function that forward and backward-evaluates an expression.
 It returns the forward-evaluated (function) value

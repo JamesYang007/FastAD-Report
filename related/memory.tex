@@ -4,16 +4,21 @@ All other libraries, in some form, manage a stack or a ``tape''
 to store the series of operations, and
 the value and adjoints for each expression node.
 Stan even writes their own custom memory allocator to create a memory pool,
-which they refer to as the ``arena'', to alleviate memory fragmentation
-and promote data locality.
+which they refer to as the ``arena'', to alleviate memory fragmentation,
+promote data locality, and reduce cost of memory allocations.
 This is largely connected with their user interface.
 A sequence of expressions to evaluate is represented 
 in the usual way ending the statement with a semi-colon.
 This forces the design to store a sequence of operations dynamically.
-FastAD is unique in that it uses the comma operator to represent a sequence of expressions
-(see Section~\ref{ssec:glue}), which completely eliminates the need for memory management.
+For some libraries, on top of memory management of these operations,
+a run-time check must be performed at every evaluation to determine the correct operation~\cite{bell:2020}.
+Others like Stan rely on dynamic polymorphism to look up the vtable for correct operation~\cite{carpenter:2015}.
+FastAD is unique in that it overloads the comma operator to represent a sequence of expressions
+(see Section~\ref{ssec:glue}), which completely eliminates the need for such memory management,
+since the entire expression is known at compile-time.
 Thanks to expression template, the sequence of operations to remember
 is all stored within the type, which brings no memory cost during run-time.
+This also significantly simplies the overall design.
 
 While Stan notes that they are more memory-efficient than most libraries~\cite{carpenter:2015},
 we noticed a non-negligible difference in memory consumption between Stan and FastAD.

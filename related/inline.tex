@@ -8,7 +8,7 @@ Stan uses dynamic polymorphism whereas FastAD uses static polymorphism.
 Dynamic polymorphism inevitably invokes virtual function calls,
 which cannot be inlined except in extremely rare cases
 with the highest compiler optimization.
-Virtual function calls can be expensive, especially if called often,
+Virtual function calls can be expensive, especially if called often and
 if the function itself is relatively cheap.
 We saw in Sections~\ref{ssec:unary}-\ref{ssec:normal_log_pdf}
 that forward and backward-evaluations are quite simple for each node

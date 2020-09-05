@@ -158,8 +158,7 @@ In general, if $v \in \R^{m \times n}$ and $w \in \R^{p \times q}$, then
         \sum\limits_{k=1}^p \sum\limits_{l=1}^q 
         \frac{\partial f}{\partial w_{kl}} \frac{\partial w_{kl}}{\partial v_{ij}}
 \end{align*}
-Hence, regardless of the shape or size of $v$, 
-its adjoint will always have the same size as its value.
+In particular, the adjoint will always have the same shape and size as the value.
 
 For nodes that have a reference back to the containers $x_i$, i.e.\ $w_1,\ldots,w_4$,
 they must increment the adjoints in the containers with their seed.

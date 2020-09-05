@@ -2,7 +2,7 @@
 
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=\textwidth]{figs/stochastic_volatility_fig.png}
+    \includegraphics[width=0.8\textwidth]{figs/stochastic_volatility_fig.png}
     \caption{%
         Stochastic volatility benchmark of Stan against FastAD 
         plotted relative to FastAD average time.
@@ -32,15 +32,15 @@ the next $N/2$ values refer to $h$,
 and the next three refer to $\phi, \sigma, \mu$, respectively.
 We take care of the edge case where $N < 2$ to let $N = 2$ and then carry out the steps above.
 Here, $y$ is a constant.
-All quantities are random generated uniformly in $(-1,1)$ range,
-but $\sigma$ is replaced with its absolute value plus $0.1$ to make it strictly positive.
+All quantities are randomly generated uniformly in $(-1,1)$ range
+and $\sigma$ is modified afterwards to be strictly positive.
 Fig.\ref{fig:stochastic_volatility} shows the benchmark results.
 
 FastAD outperforms Stan by 3 times for the largest $N$.
 The trend seems quite stabilized from the start.
 It is interesting to see that FastAD is only marginally slower than the \code{double} baseline
 for moderate to large $N$ values.
-The ratio between FastAD time to baseline time is $ 1.07$, which means there is about a $7\%$ overhead only
-from just one forward-evaluation to also compute the gradient.
+The ratio between FastAD time to baseline time is $ 1.07$, which means there is about a $7\%$ overhead 
+just from one \emph{forward-evaluation} to \emph{also} compute the gradient.
 Hence, gradient computation is almost free from just computing the log-pdf,
 which puts FastAD at near-optimal performance.

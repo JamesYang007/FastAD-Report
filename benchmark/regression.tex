@@ -2,7 +2,7 @@
 
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=\textwidth]{figs/regression_fig.png}
+    \includegraphics[width=0.8\textwidth]{figs/regression_fig.png}
     \caption{%
         Bayesian linear regression benchmark of Stan against FastAD 
         plotted relative to FastAD average time.
@@ -23,8 +23,8 @@ and because the other libraries were not well-suited to implement this efficient
 The fill function for this functor will resize a vector of size $N = 2^K$ as $\tilde{N} = (K + 1) \cdot 10 + 2$,
 where the first $(K+1) \cdot 10$ values refer to $w$ and the rest refer to $b$ and $\sigma$, respectively.
 It also resizes its private members $y \in \R^{1000}$ and $X \in \R^{1000 \times \tilde{N}}$, which are constants.
-All quantities are randomly generated uniformly in $(-1,1)$ range,
-but $\sigma$ modified to be strictly positive.
+All quantities are randomly generated uniformly in $(-1,1)$ range
+and $\sigma$ is modified afterwards to be strictly positive.
 
 FastAD outperforms Stan by 8 times for the largest $N$.
 The trend stabilizes starting from around $N=70$.

@@ -54,6 +54,7 @@ private:
     expr_t expr_;
 };
 \end{lstlisting}
+
 \code{UnaryNode} is also a viewer of value and adjoint,
 hence derives from \code{ValueAdjView}.
 We follow the standard traits metaprogramming pattern by defining our own
@@ -93,7 +94,7 @@ We then save and return this result.
 The code is extremely simple and compact and it applies for any shape (scalar, vector, or matrix).
 Moreover, since we directly work with \code{Eigen} matrices of \code{double}, 
 which view contiguous region of memory by design,
-we are able to vectorize the forward-evaluation.
+all operations are already vectorized.
 
 The backward-evaluation defined by \code{beval} first saves the seed to its adjoint.
 See Section~\ref{ssec:binary} for why we save the seed.

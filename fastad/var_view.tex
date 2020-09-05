@@ -30,7 +30,8 @@ struct VarViewBase<VarView<ValueType, ShapeType>>:
     template <class T>
     constexpr T bind_cache(T begin) { return begin; }
     util::SizePack bind_cache_size() const { return {0,0}; }
-    util::SizePack single_bind_cache_size() const { return {0,0}; }
+    util::SizePack single_bind_cache_size() const 
+    { return {0,0}; }
 };
 \end{lstlisting}
 
@@ -44,11 +45,14 @@ For a \code{VarView} object, it just return its value.
 The member \code{beval} represents the backward-evaluation.
 As described in Section~\ref{sec:reverse}, 
 these nodes must increment the adjoints of the actual variables they reference.
-The helper function \code{to\_array} takes the argument and returns the ``array'' version.
-For scalars, it returns the argument itself.
-However, for \code{Eigen} matrix-like objects, 
+It is worth explaining 
+the helper function \code{to\_array},
+since it gets used frequently.
+\code{to\_array} takes the argument and returns the ``array'' version.
+For scalars, it returns the argument itself,
+however, for \code{Eigen} matrix-like objects, 
 it returns the result of calling \code{x.array()}, where \code{x} is the argument.
-The reason for this is that sometimes the seed may be a scalar
+One reason for this is that sometimes the seed may be a scalar
 when the adjoint may be a vector or a matrix.
 Unfortunately, \code{Eigen} matrix-like objects do not play well with element-wise operations,
 and such API is only available for array-like objects.

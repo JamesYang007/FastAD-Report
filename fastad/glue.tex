@@ -43,7 +43,7 @@ since in C++ the usual comma operator would only keep the right-expression value
 One caveat is that only the right-expression is given the seed and the left-expression is seeded with 0.
 This is, again, because the node represents the right expression and hence differentiates only that expression.
 It is still consistent with all other nodes, including \code{EqNode}.
-In the example in Section~\ref{ssec:eq}, the assignment expression is indeed seeded with 0.
-This does not mean that \code{t} has an adjoint of 0.
+In the example in Section~\ref{ssec:eq}, the assignment expression is indeed seeded with 0,
+but this does not mean that \code{t} has an adjoint of 0.
 The backward-evaluation of the second expression will have first accumulated the adjoints for \code{t}
 and when backward-evaluating the assignment expression, 0 gets \emph{accumulated} to the adjoint.
