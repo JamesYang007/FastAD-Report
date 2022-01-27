@@ -1,35 +1,31 @@
 \section{Introduction}
 
-In modern computational problems surrounding optimization, statistical inference, and machine learning,
-gradient computation continues to play a critical role in tackling these problems.
-The simplest example in optimization is the well-known root-finding algorithm Newton-Raphson method,
-which updates a proposal value $x_n$ at every iteration by $-\frac{f(x_n)}{f'(x_n)}$,
-moving the proposal closer to a root of the function.
-In Bayesian statistics, advanced MCMC algorithms
+Gradient computation plays a critical role in modern computing problems 
+surrounding optimization, statistics, and machine learning.
+For example, one may wish to compute sensitivities of 
+an Ordinary-Differential-Equation (ODE) integrator
+for optimization or parameter estimation~\cite{carpenter:2015}.
+In Bayesian statistics, advanced Markov-Chain-Monte-Carlo (MCMC) algorithms
 such as the Hamiltonian Monte Carlo (HMC) and the No-U-Turn-Sampler (NUTS) rely
 heavily on computing the gradient of a (log) joint probability density function
 to update proposal samples in the leapfrog algorithm~\cite{hoffman:2011}\cite{neal:2012}.
 Neural networks rely on computing 
-the gradient of a loss function during back-propogation
+the gradient of a loss function during back-propagation
 to update the weights between each layer of the network~\cite{goodfellow:2016}.
 
-Often times, the target function to differentiate is extremely complicated
+Oftentimes, the target function to differentiate is extremely complicated,
 and it is very tedious and error-prone for the programmer to manually define 
 the analytical formula for the gradient~\cite{margossian:2018}.
 It is rather desirable to have a generic framework where the programmer 
 only needs to specify the target function to differentiate it.
-Moreover, because computing the derivative is usually the most expensive part of any algorithm
-that relies on this gradient information and usually requires tens of thousands of evaluations, 
-it is imperative that such a framework is as efficient as possible.
-These desires motivated the development of such a framework, \emph{automatic differentiation}.
+Moreover, computing the derivative may be one of the more expensive parts of an algorithm
+if it requires numerous such evaluations, as it is the case for the three examples discussed above.
+Hence, it is imperative that gradient computation is as efficient as possible.
+These desires motivated the development of such a framework: \textbf{automatic differentiation} (AD).
 
-Automatic differentiation (AD) comes primarily in two modes: \emph{forward} and \emph{reverse}.
-FastAD is a general-purpose AD library in C++ supporting both modes, but has a strong focus on the \emph{reverse}-mode.
+FastAD is a general-purpose AD library in C++ supporting both forward and reverse modes of automatic differentiation.
 It is highly optimized to compute gradients, but also supports computing the full Jacobian matrix.
 Similar to the Stan Math Library, FastAD is primarily intended for differentiating scalar functions, 
 and it is well-known that reverse-mode is more efficient than forward-mode for these cases~\cite{carpenter:2015}.
-This is because in reverse-mode the gradient is directly computed by running the reverse-mode algorithm once,
-however, in the forward-mode, the \emph{directional derivative} is computed and hence requires 
-$n$ iterations, where $n$ is the input size, of the forward-mode algorithm to compute each of the partial derivatives.
 For these reasons, this paper will focus only on reverse-mode and computing gradients 
-rather than forward-mode and computing a full Jacobian matrix.
+rather than forward-mode or computing a full Jacobian matrix.

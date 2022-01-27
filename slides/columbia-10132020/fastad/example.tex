@@ -1,0 +1,22 @@
+\subsection{Example}
+\frame{\tableofcontents[currentsubsection]}
+
+\begin{frame}[fragile]
+\frametitle{Example Code}
+\begin{lstlisting}[style=customcpp]
+    Var<double, mat> X(10, 3);
+    Var<double, vec> w(3);
+    Var<double, scl> s1, s2;
+
+    auto expr = bind((
+        s1 = sum(w),
+        s2 = sum(X),
+        s1 * dot(X, w) + sin(s1 * s2) * norm(X)
+    ));
+
+    double f = autodiff(expr);
+
+    std::cout << X.get_adj() << std::endl;
+    std::cout << w.get_adj() << std::endl;
+\end{lstlisting}
+\end{frame}

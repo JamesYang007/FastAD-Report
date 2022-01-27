@@ -1,20 +1,11 @@
-In modern computational problems surrounding optimization, statistical inference, and machine learning,
-gradient computation continues to play a critical role in tackling these problems.
-Without a generic system that can replace manually-written code for computing gradients,
-it is quite tedious and error-prone for the user to implement any algorithm that relies on this information.
-While there are existing, well-known libraries for automatic differentation such as The Stan Math Library
-and Adept, there are major drawbacks such as 
-a lack of vectorization using SIMD instructions, 
-large memory consumptions,
-lack of inlining, 
-and an overhead of managing the expression graph at run-time.
+Automatic differentiation is a set of techniques to efficiently and accurately
+compute the derivative of a function represented by a computer program.
+Existing C++ libraries for automatic differentiation (e.g. Adept, Stan Math Library),
+however, exhibit large memory consumptions and runtime performance issues.
 This paper introduces FastAD, a new C++ template library for automatic differentiation,
-that overcomes all of these challenges in existing libraries by using
-a fully expression template based design,
-lazy-evaluation,
-and lazy-allocation strategies.
-Moreover, we show that C++17 template metaprogramming tools can 
-make further optimizations at compile-time to generate more efficient code.
-Benchmarks show that our unique design proves to be optimal in various settings
-including a few real-world examples,
-showing negligible overhead from a manually-written gradient computation.
+that overcomes all of these challenges in existing libraries by using vectorization,
+simpler memory management using a fully expression-template-based design,
+and other compile-time optimizations to remove some run-time overhead.
+Benchmarks show that FastAD performs 2-10 times faster than Adept
+and 2-19 times faster than Stan
+across various test cases including a few real-world examples.

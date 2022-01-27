@@ -12,47 +12,19 @@ The following is an alphabetical list of the libraries used for benchmarking:\@
     \item \href{https://github.com/trilinos/Trilinos/tree/master/packages/sacado}{Sacado 13.0.0}~\cite{phipps:2009}
     \item \href{https://github.com/stan-dev/math}{Stan Math Library 3.3.0}~\cite{carpenter:2015}
 \end{itemize}
-All of the libraries are at their most recent release.
-These libraries have also been used by others for 
-benchmarking~\cite{carpenter:2015}\cite{margossian:2018}\cite{hogan:2014}.
+All the libraries are at their most recent release at the time of benchmarking.
+These libraries have also been used by others~\cite{carpenter:2015}\cite{margossian:2018}\cite{hogan:2014}.
 
-The benchmark configuration is as follows:
+All benchmarks were run on a Google Cloud Virtual Machine with the following configuration:
 \begin{itemize}
-    \item \textbf{OS}: MacOSX Catalina Version 10.15.6 
+    \item \textbf{OS}: Ubuntu 18.04.1 
     \item \textbf{Architecture}: x86 64-bit
-    \item \textbf{Processor}: 3.4 GHz Quad-Core Intel Core i5
+    \item \textbf{Processor}: Intel Xeon Processor 
+    \item \textbf{Cores}: 8
     \item \textbf{Compiler}: GCC10
     \item \textbf{C++ Standard}: 17
-    \item \textbf{Compiler Flags}: 
-\begin{verbatim}
-    -O3 -march=native 
-    -DNDEBUG 
-    -DEIGEN_NO_DEBUG 
-    -DADEPT_STACK_THREAD_UNSAFE 
-    -D_REENTRANT 
-    -DEIGEN_MATRIXBASE_PLUGIN="stan/math/prim/eigen_plugins.h" 
-    -DEIGEN_ARRAYBASE_PLUGIN="stan/math/prim/eigen_plugins.h"
-\end{verbatim}
-    \item \textbf{FastAD Dependency}: \code{Eigen3.3.7}
+    \item \textbf{Compiler Optimization Flags}: \code{-O3 -march=native} 
 \end{itemize}
-While we used the newest GCC compiler, there is nothing in FastAD that relies on GCC10 specifically.
-FastAD, however, requires the C++17 standard.
-The \code{-O3} indicates maximum level of compiler optimization,
-and \code{-march=native} exposes all of the available instruction sets 
-such that the compiler can choose the best one.
-The preprocessor definitions are to disable debugging
-for best performance for all libraries, and some definitions were required by the libraries in order to compile.
-Finally, FastAD has a dependency on \code{Eigen} matrix library,
-but this is also a dependency for Stan.
-The only application running was \code{iTerm2} (terminal),
-the benchmark program, and system-related applications.
-
-\if 0
-Compile time was not rigorously benchmarked, 
-although we do note that adding code for Stan
-increased compile time dramatically, which was also observed in~\cite{carpenter:2015}.
-This is likely because Stan has numerous large dependencies such as Boost, Eigen, Sundial, and TBB.\@
-\fi
 
 All benchmarks benchmark the case where a user wishes to differentiate
 a scalar function $f$ for different values of $x$.
@@ -64,230 +36,35 @@ updates a quantity called the ``momentum vector'' $\rho$
 with $\nabla_\theta \log(p(\theta, x))$ ($x$ here is treated as a constant),
 where $\theta$ is a ``position vector'' that also gets frequently updated.
 
-Our benchmark drivers are very similar to the one used by Stan~\cite{carpenter:2015}.
-In fact, we mainly took the same benchmark drivers, abstracted some details, and added a few more tests.
+Our benchmark drivers are very similar to the ones used by Stan~\cite{carpenter:2015}.
 As noted in~\cite{margossian:2018}, there is no standard set of benchmark examples for AD,
 but since Stan is most similar to FastAD in both design and intended usage,
-we wanted to use the same examples and keep the benchmark as similar as possible.
+we wanted to keep the benchmark as similar as possible.
 
-Every function to differentiate is defined as a functor and receives a single input,
-which is a vector-like object of AD variables representing $x$.
-\if 0
-For example, the \code{sum} functor is as follows:
-\begin{lstlisting}[style=customcpp]
-struct SumFunc
-{
-    template <class T>
-    T operator()(const Eigen::Matrix<T, Eigen::Dynamic, 1>& x) const
-    { return x.sum(); }
-
-    adept::aReal operator()(const adept::aVector& x) const
-    { return adept::sum(x); }
-
-    auto operator()(const Eigen::Matrix<stan::math::var, Eigen::Dynamic, 1>& x) const
-    { return stan::math::sum(x); }
-
-    template <class T>
-    auto operator()(ad::VarView<T, ad::vec>& x) const
-    { return ad::sum(x); }
-
-    void derivative(const Eigen::VectorXd& x,
-                    Eigen::VectorXd& grad) const
-    { grad = Eigen::VectorXd::Ones(x.size()); }
-
-    std::string name() const { return "sum"; }
-
-    void fill(Eigen::VectorXd& x) {
-        for (int i = 0; i < x.size(); ++i) {
-            x(i) = i;
-        }
-    }
-};
-\end{lstlisting}
-\fi
-All functors overload \code{operator()} to take in a library-specific vector of AD variables.
-Adept2.0 supports their own array feature and encourages the use of \code{aVector}.
-FastAD supports the AD variable to have a vector-like shape by specifying the second template parameter as \code{ad::vec}.
-All other libraries support a direct interface with~\code{Eigen::Matrix<AD variable type>}.
-Some libraries provide built-in functions to evaluate the functor, and so we specialize whenever that is the case
-to call these functions instead of performing the default overload,
-which will always try to use \code{Eigen} API.
-If a function cannot be easily written with \code{Eigen} API, then a manually written code is used.
-Every benchmark times the default overload for a vector of \code{double}s,
-which will compute only the forward-evaluation, and this will serve as a baseline for all benchmarks.
-This baseline will be denoted as \code{double} in the figures.
-This approach was also used in~\cite{carpenter:2015},
-however in our benchmark, the baseline is optimized to be vectorized,
-whereas the reference uses a manual for-loop that may not be.
-Hence, our results for all libraries with respect to the baseline may differ from those of the reference.
-
-\if 0
-\code{name} returns an \code{std::string} object with a short name of the functor
-and \code{fill} fills the initial values prior to starting any benchmarks. 
-\fi
-
-% Original: have code for how we benchmarked
-\if 0
-For brevity, the following is only a snippet of our main
-benchmark function~\code{time\_gradients} that benchmarks Adept:
-\begin{lstlisting}[style=customcpp]
-    auto& adept_pack = packs.at(adb::TestName::adept);
-    if (adept_pack.run) {
-        adept::aVector x_ad(x.size());
-        sw.start();
-        for (int i = 0; i < adept_pack.n_iter; ++i) {
-            adept_gradient(f, x, x_ad, fx, grad_fx);
-        }
-        sw.stop();
-        check_gradient(grad_fx, expected, adept_pack.name);
-        adept_pack.time = sw.elapsed() / adept_pack.n_iter;
-    }
-\end{lstlisting}
-Other libraries are benchmarked in a similar way with \code{adept} replaced with the other library names.
-\code{packs} is an \code{std::unordered\_map} mapping \code{TestName} enum value to a \code{TestPack} object
-which contains information such as name of library, number of iterations to run, whether to run or not, etc.
-This abstraction was only done to ease the programming and has no bearing on the actual benchmark results.
-The first line grabs the \code{TestPack} object associated with Adept and checks if it should be run.
-If so, it allocates a vector of AD variables.
-\fi
-
-% Original: only makes sense if code is shown above
-\if 0
-The object \code{sw} is previously declared (not shown) as \code{StopWatch<>} and it is used as a stopwatch.
-\code{StopWatch<>} is our own class that wraps \code{std::chrono::steady\_clock} to measure interval time.
-The member function \code{start()} saves the starting time point and \code{end()} saves the ending time point.
-Member function \code{elapsed()} returns the time elapsed in seconds between \code{begin()} and \code{end()} calls.
-The elapsed time is computed in nanoseconds and then scaled by $10^{-9}$ to convert into seconds.
-We measure the time it takes to differentiate \code{f}, \code{adept\_pack.n\_iter} times,
-with the input \code{x} and the AD variable \code{x\_ad},
-store the function result into \code{fx}, and save the gradient in \code{grad\_fx}.
-For all benchmark examples, \code{n\_iter} is actually the same for all libraries and is set to 10000,
-but for matrix multiplication, it is set to 1000 
-since the complexity of the function was large enough to reach stable results with fewer iterations.
-\code{f} is the functor representing the function to differentiate,
-which was previously described in detail.
-The function \code{check\_gradient} is for our debugging purposes to check accuracy.
-Note that it is only called after the stopwatch finishes, so it does not affect the benchmark results.
-\fi
-
-% Simplified: broad description of only what is necessary
-We measure the average time over $T$ iterations
-to differentiate a function
+We measure the average time to differentiate a function
 with an initial input and 
-save the function evaluation result and the gradient.
-For all benchmark examples, $T = 10000$,
-but for matrix multiplication, it is set to 1000 
-since the complexity of the function was large enough to reach stable results with fewer iterations.
-After timing each library, the gradients were compared with manually-written gradient computation to check accuracy.
+save the function evaluation result as well as the gradient.
+After timing each library, the gradients are compared with manually-written gradient computation to check accuracy.
 All libraries had some numerical issues for some of the examples,
 but the maximum proportion of error to the actual gradient values was on the order of $ 10^{-15}$, which is negligible.
 Hence, in terms of accuracy, all libraries were equally acceptable.
+Finally, all benchmarks were written in the most optimal way for every library based on their documentation.
 
-% Original: only makes sense if adept code is shown
-\if 0
-Because FastAD works very differently from all of these libraries,
-the benchmark setup is quite different:
-\begin{lstlisting}[style=customcpp]
-    auto& fastad_pack = packs.at(adb::TestName::fastad);
-    if (fastad_pack.run) {
-        Eigen::VectorXd val_buf;
-        Eigen::VectorXd adj_buf;
-        ad::VarView<double, ad::vec> x_ad(x.data(),
-                                          grad_fx.data(),
-                                          x.size());
-        auto expr = f(x_ad);
-        auto size_pack = expr.bind_cache_size();
-        val_buf.resize(size_pack(0));
-        adj_buf.resize(size_pack(1));
-        expr.bind_cache({val_buf.data(), adj_buf.data()});
-        sw.start();
-        for (int i = 0; i < fastad_pack.n_iter; ++i) {
-            fastad_gradient(expr, fx, grad_fx);
-        }
-        sw.stop();
-        check_gradient(grad_fx, expected, fastad_pack.name);
-        fastad_pack.time = sw.elapsed() / fastad_pack.n_iter;
-    }
-\end{lstlisting}
-Section~\ref{ssec:example} already discussed the above code in detail.
-\fi
+Every benchmark also times the ``baseline'', 
+which is a manually-written forward evaluation (computing function value).
+This will serve as a way to measure the extra overhead of computing the gradient relative to computing the function value.
+This approach was also used in~\cite{carpenter:2015},
+however in our benchmark, the baseline is also optimized to be vectorized.
+Hence, our results for all libraries with respect to the baseline may differ from those in the reference.
 
-% Original
-\if 0
-We defined a gradient-computing function 
-such as \code{adept\_gradient} 
-for every library except for Stan,
-since they already provided their own.
-The code is exactly the same as the one used by Carpenter~\cite{carpenter:2015},
-except that the allocations for the AD variables have been moved to before starting the stopwatch as shown above for Adept.
-So, we do not show the code for these functions and 
-direct the reader to the reference and the github page.
-As for FastAD, the gradient function is extremely simple:
-\begin{lstlisting}[style=customcpp]
-    template <class ExprType>
-    inline void fastad_gradient(ExprType& expr,
-                                double& fx,
-                                Eigen::VectorXd& grad_fx) 
-    {
-        grad_fx.setZero();
-        fx = ad::autodiff(expr);
-    }
-\end{lstlisting}
-It first sets the gradient to zero, which is required if multiple AD computations 
-are carried out for the same expression viewing that gradient region.
-Then \verb|ad::autodiff| both forward and backward-evaluates \verb|expr|
-and stores the function value to \verb|fx|.
-The backward-evaluation will update \verb|grad_fx| with the gradient values.
-\fi
-
-% Original
-\if 0
-The main driver shown below is called \verb|run_test|, which calls
-\verb|time_gradients| with various input sizes $N$.
-\begin{lstlisting}[style=customcpp]
-template <class F>
-inline void run_test(F f, 
-                     std::unordered_map<adb::TestName, adb::TestPack>& packs,
-                     size_t max = 16 * 1024) 
-{
-    adept::Stack stack;
-    std::string file_name = f.name() + "_eval.csv";
-    std::fstream fs(file_name, std::fstream::out);
-    print_results_header(fs, packs);
-    for (int N = 1; N <= max; N *= 2) {
-        std::cout << "N=" << N << std::endl;
-        Eigen::VectorXd x(N);
-        f.fill(x);
-        time_gradients(f, x, packs, fs);
-    }
-}
-\end{lstlisting}
-\fi
-The input vector size $N$ grows exponentially in powers of $ 2$ starting from $ 1$ to
-$2^{14}$, and for each $N$ we fill the input vector using the functor and benchmark all libraries.
-This range of $N$ was enough to determine the asymptotic trend.
-
-We kept the same optimizations done for other libraries as mentioned in~\cite{carpenter:2015}.
-For example, Adept requires the user to define a stack object that saves the 
-expression graph as well as the temporary values and adjoints for each node.
-However, this stack object can be reused over many iterations and only needs to be allocated once.
-
-For simplicity, we do not actually provide new $x$ values, but the benchmark code
-is written as if $x$ may be different at every iteration; that is,
-no optimizations were made for any libraries to exploit the fact that 
-the $x$ values are actually kept the same.
-This is important because most of the libraries require an initial step of creating AD variables
-and copying the input values into the AD variables.
-While we make the optimization to allocate these variables only one time for every library before the benchmark begins,
-we cannot optimize-out the initialization
-at every iteration to save the cost of copying.
-
-The first few subsections will cover some micro-benchmarks where we benchmark commonly used functions: 
+Sections~\ref{ssec:sum_prod}-\ref{ssec:normal_log_pdf} 
+cover some micro-benchmarks where we benchmark commonly used functions: 
 summation and product of elements in a vector, 
 log-sum-exponential, 
 matrix multiplication, 
-and normal log-probability density function (pdf).
-The last two subsections will cover some macro-benchmarks where we benchmark practical examples: 
+and normal log-pdf.
+Sections~\ref{ssec:regression}-\ref{ssec:stochastic_volatility} 
+cover some macro-benchmarks where we benchmark practical examples: 
 a regression model and a stochastic volatility model.
 
 \input{benchmark/sum_prod}

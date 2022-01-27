@@ -1,0 +1,251 @@
+\subsection{Vectorization}
+\frame{\tableofcontents[currentsubsection]}
+
+% What is vectorization?
+\begin{frame}
+\frametitle{Vectorization}
+\begin{itemize}
+
+\item \textbf{Vectorization} refers to the usage of Single Instruction Multiple Data (SIMD) instructions
+    to operate on multiple values in parallel at the hardware level.
+    \begin{itemize}
+        \item Not the same as multi-threading or multi-processing.
+    \end{itemize}
+
+\item Intel 64-bit processor with AVX (one type of SIMD set) processes 
+    four double-precision floating point numbers simultaneously.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Vectorization: Challenges}
+\begin{itemize}
+
+\item Vectorization requirements are very stringent, e.g.
+    \begin{itemize}
+        \item Not guaranteed if memory access is not contiguous.
+        \item Impossible if there is any dependency between loop iterations.
+    \end{itemize}
+
+\item Directly calling Intel intrinsic functions in a systematic way is not easy.
+
+\end{itemize}
+\end{frame}
+
+% Key ideas to achieving vectorization
+\begin{frame}
+\frametitle{Vectorization in FastAD}
+\begin{itemize}
+
+\item Most of the opportunities for vectorization is in vector/matrix operations.
+\item Why not integrate a good matrix library? 
+    \begin{itemize}
+        \item \code{Eigen} (industry standard)
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+% Integrating Eigen
+\begin{frame}
+\frametitle{Vectorization: Integrating Eigen}
+\begin{itemize}
+
+\item Not trivial!
+\item Adept2.0 implements its own matrix library because 
+    integrating matrix libraries like \code{Eigen} 
+    posed a great challenge to the design~\cite{hogan:2014}.
+\item Stan integrates \code{Eigen}, but there are examples where it does not vectorize well.
+
+\end{itemize}
+\end{frame}
+
+% How Stan and others use Eigen
+\begin{frame}
+\frametitle{Vectorization: Integrating Eigen}
+\begin{itemize}
+
+\item Stan has ``Plug-ins'' that extend \code{Eigen} to work with Stan AD variables.
+    \begin{itemize}
+        \item \code{Eigen::Matrix<stan::math::var, \ldots>} 
+    \end{itemize}
+
+\item ADOL-C, CppAD, Sacado do not integrate \code{Eigen} with plug-ins,
+    but can still use \code{Eigen} for the syntactic sugar.
+
+\item What is the problem with this design?
+
+\end{itemize}
+\end{frame}
+
+% What is wrong with Stan and other libraries
+\begin{frame}
+\frametitle{Vectorization: Integrating Eigen} 
+\begin{itemize}
+
+\item AD variable object represents a pair of value and adjoint.
+    \begin{itemize}
+        \item Heterogeneous structure.
+        \item Forward and backward-evaluation operate 
+            on values and adjoints separately.
+        \item Reading values is not contiguous (separated by adjoint).
+        \item Reading adjoints is not contiguous (separated by values).
+        \item Hard to auto-vectorize.
+        \item \code{Eigen} optimized to vectorize for matrix of \code{double}s.
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+% Disassembly
+\begin{frame}
+\frametitle{Disassembly Example}
+
+\begin{itemize}
+
+\item Example: differentiate $f(x) = \sum\limits_{i=1}^n x_i$.
+
+\item Generate assembly code for both Stan and FastAD that performs the summation.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Disassembly Example (Stan)}
+
+\begin{lstlisting}[style=customasm]
+L3178:
+    movq    (%rax), %rdx
+    addq    $8, %rax
+    <@\textcolor{red}{vaddsd}@>   8(%rdx), %xmm0, %xmm0 
+    cmpq    %rcx, %rax 
+    jne L3178
+\end{lstlisting}
+
+\begin{itemize}
+\item \code{vaddsd} is an AVX instruction to add \emph{scalar} double-precision values.
+    \begin{itemize}
+        \item \textbf{Not} vectorized.
+    \end{itemize}
+
+\item Specialization of an \code{Eigen} class 
+    for reduction operations with \emph{default traversal}.
+    \begin{itemize}
+        \item Same as naive for-loop.
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Disassembly Example (FastAD)}
+
+\begin{lstlisting}[style=customasm]
+ L3020:
+     addq    $8, %rdx
+     <@\textcolor{red}{vaddpd}@>  (%rax), %ymm1, %ymm1   
+     <@\textcolor{red}{vaddpd}@>  32(%rax), %ymm0, %ymm0 
+     addq    $64, %rax
+     cmpq    %rdx, %rcx 
+     jg  L3020 
+\end{lstlisting}
+
+\begin{itemize}
+
+\item \code{vaddpd} is an AVX instruction to add \emph{packed} double-precision values.
+
+\item Specialization of an \code{Eigen} class 
+    for reduction operations with \emph{linear vectorized traversal}.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Shape Traits}
+
+\begin{tabular}{|c|c|c|}
+    \hline
+    & Other & FastAD \\
+    \hline
+    Scalar & \code{var} &  \code{ad::Var<double, ad::scl>} \\
+    \hline
+    Vector & \code{Eigen::Matrix<var, -1, 1>} & \code{ad::Var<double, ad::vec>} \\
+    \hline
+    Matrix & \code{Eigen::Matrix<var, -1, -1>} & \code{ad::Var<double, ad::mat>} \\
+    \hline
+\end{tabular}
+
+\begin{itemize}
+
+\item Instead of ``matrix of pair of doubles'', ``\textbf{pair of matrix of doubles}''.
+
+\item All operations done on \textbf{matrix of doubles}.
+
+\item Easily vectorizable.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Shape Traits}
+\begin{itemize}
+\item Concept can be generalized for all expression nodes.
+\item Shape traits do not complicate forward and backward evaluation implementation.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{UnaryNode: Declaration}
+\begin{lstlisting}[style=customcpp]
+template <class Unary, class ExprType>
+struct UnaryNode:
+    ValueAdjView<
+      typename util::expr_traits<ExprType>::value_t,
+      typename util::shape_traits<ExprType>::shape_t>
+{ /*...*/ };
+\end{lstlisting}
+\begin{itemize}
+\item \code{UnaryNode} takes the same shape as underlying expression.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{UnaryNode: Forward Evaluation}
+\begin{lstlisting}[style=customcpp]
+const var_t& feval() {
+    auto&& a_expr = util::to_array(expr_.feval());
+    util::to_array(this->get()) = Unary::fmap(a_expr);
+    return this->get();
+}
+\end{lstlisting}
+\begin{itemize}
+\item Recursively forward evaluate each child left-to-right.
+\item Use the children values to compute current node's value.
+    \begin{itemize}
+        \item Determined by the functor \code{Unary}.
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{UnaryNode: Backward Evaluation}
+\begin{lstlisting}[style=customcpp]
+template <class T>
+void beval(const T& seed) {
+    auto&& a_val = util::to_array(this->get());
+    auto&& a_adj = util::to_array(this->get_adj());
+    auto&& a_expr = util::to_array(expr_.get());
+    a_adj = seed;
+    expr_.beval(Unary::bmap(a_adj, a_expr, a_val));
+}
+\end{lstlisting}
+\begin{itemize}
+\item Save seed as current node's adjoint.
+\item Compute the next seed using chain rule.
+    \begin{itemize}
+        \item Determined by functor \code{Unary}.
+    \end{itemize}
+\item Recursively backward evaluate right-to-left.
+\end{itemize}
+\end{frame}

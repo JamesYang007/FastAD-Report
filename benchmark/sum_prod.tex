@@ -35,31 +35,26 @@
 
 The summation function is defined as $f_s:\R^n \to \R$ where~$f_s(x) = \sum\limits_{i=1}^n x_i$,
 and the product function is defined as $f_p:\R^n \to \R$ where~$f_p(x) = \prod\limits_{i=1}^n x_i$.
-The only libraries supporting a built-in function for summation are Adept, FastAD, and Stan;
-those that support product are Adept and FastAD.
-As another test, we forced all libraries to use a manually-written for-loop-based summation and product.
-Fig.\ref{fig:sum_prod} shows the benchmark results.
+We also tested the case where we forced all libraries to use a manually-written for-loop-based summation and product.
+Fig.~\ref{fig:sum_prod} shows the benchmark results.
 
 In all four cases, it is clear that FastAD outperforms all libraries for all values of $N$
 by a significant factor.
 For \code{sum}, 
-the next three fastest libraries, asymptotically, are Adept, Stan, and Sacado, respectively.
-The trend stabilizes starting from $N=2^6=64$ where Adept is about $ 12$ times slower than
-FastAD, Stan about $ 18$ times, and Sacado about $ 74$ times.
-The naive, for-loop-based benchmark shown in Fig.\ref{fig:sum_iter} exhibits a similar pattern,
+the next three fastest libraries, asymptotically, are Adept, Stan, and CppAD, respectively.
+The trend stabilizes starting from $N=2^6=64$ where Adept is about $ 10$ times slower than
+FastAD and Stan about $ 15$ times.
+The naive, for-loop-based benchmark shown in Fig.~\ref{fig:sum_iter} exhibits a similar pattern,
 although the performance difference with FastAD is less extreme:
-Adept is about $ 4$ times slower, 
-Stan about $ 6$ times,
-and Sacado about $ 6.5$ times.
+Adept is about $ 4.5$ times slower
+and Stan about $ 6$ times.
 Nonetheless, this is still a very notable difference.
 
 For the \code{prod} and \code{prod\_iter} cases, 
-Fig.\ref{fig:prod},\ref{fig:prod_iter} again show
+Fig.~\ref{fig:prod},\ref{fig:prod_iter} again show
 a similar trend as \code{sum} and \code{sum\_iter}.
 Overall, the comparison with FastAD is less extreme.
-For \code{prod}, Adept is about $ 5.6$ times slower than FastAD,
-Stan about $ 7.3$ times slower,
-and Sacado about $ 16.4$ times slower.
-For \code{prod\_iter}, Adept is about $2.9$ times slower,
-Stan about $4$ times slower,
-and Sacado about $4.6$ times slower.
+For \code{prod}, Adept is about $ 5$ times slower than FastAD,
+and Stan about $ 7$ times.
+For \code{prod\_iter}, Adept is about $3$ times slower
+and Stan about $4.7$ times.

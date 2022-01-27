@@ -2,7 +2,7 @@
 
 \begin{figure*}[t]
     \centering
-    \includegraphics[width=0.8\textwidth]{figs/regression_fig.png}
+    \includegraphics[width=0.75\textwidth]{figs/regression_fig.png}
     \caption{%
         Bayesian linear regression benchmark of Stan against FastAD 
         plotted relative to FastAD average time.
@@ -18,22 +18,18 @@ We consider the following Bayesian linear regression model:
     \sigma &\sim Unif\paren{0.1, 10.}
 \end{align*}
 The target function is the log of the joint probability density function (up to a constant).
-For this benchmark, we only consider Stan since they specialize in differentiating such functions
-and because the other libraries were not well-suited to implement this efficiently.
-The fill function for this functor will resize a vector of size $N = 2^K$ as $\tilde{N} = (K + 1) \cdot 10 + 2$,
-where the first $(K+1) \cdot 10$ values refer to $w$ and the rest refer to $b$ and $\sigma$, respectively.
-It also resizes its private members $y \in \R^{1000}$ and $X \in \R^{1000 \times \tilde{N}}$, which are constants.
-All quantities are randomly generated uniformly in $(-1,1)$ range
-and $\sigma$ is modified afterwards to be strictly positive.
+Fig.~\ref{fig:regression} shows the benchmark results.
 
-FastAD outperforms Stan by 8 times for the largest $N$.
+FastAD outperforms Stan by $ 8.6$ times for the largest $N$ and Adept by $ 10$ times.
 The trend stabilizes starting from around $N=70$.
-It is interesting to see that FastAD is only 2 times slower than the baseline,
-despite the model consisting of a large matrix multiplication and many normal log-pdf functions.
-One of the reasons is that the compiler was able to optimize-out backward-evaluation for $X$, 
-since constants implement a no-op for backward-evaluation.
+It is interesting to see that around $N=2^7$, 
+FastAD is only $ 2.2$ times slower than the baseline,
+despite the model consisting of a large matrix multiplication and many normal log-pdfs.
+One of the reasons is that the compiler was able to optimize-out the backward-evaluation 
+of the matrix constant $X$, since constants implement a no-op for backward-evaluation.
+
 If we assume that the most expensive operation is the matrix multiplication,
-AD evaluation approximately takes 2 matrix multiplication between a matrix and a vector.
-We can then approximate a lower bound for manually-written gradient computation to be two times the baseline.
-The relative time of FastAD to this approximation is
-$1.018$, implying less than $ 1.8\%$ overhead from a manually-written code.
+AD evaluation approximately takes two matrix multiplications between a matrix and a vector.
+We can then approximate a lower bound for the manually-written gradient computation time to be two times that of the baseline.
+The relative time of FastAD to this approximated time is
+$1.1$, implying about $ 10\%$ overhead from a manually-written code.

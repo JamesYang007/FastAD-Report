@@ -1,0 +1,155 @@
+\documentclass{beamer}
+
+\mode<presentation> {%
+    \usetheme{Dresden}
+    \usecolortheme{beaver}
+}
+
+%%%%%%%% PACKAGES %%%%%%%%
+\usepackage{amsmath} % Math symbols
+\usepackage{amssymb} % Other symbols
+
+\usepackage{graphicx} % Figures
+
+\usepackage{hyperref} % Hyperlinks
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+
+\usepackage{verbatim} % Verbatim, e.g. \verb|text|
+
+\usepackage{subcaption}
+\usepackage{mwe}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows, arrows.meta, automata, positioning, shapes, decorations.pathmorphing, shadows }
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+%%%%%%%% COLOR %%%%%%%%
+\usepackage{color}
+\usepackage{xcolor}
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+\definecolor{myblue}{HTML}{3A849E}
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{myorange}{HTML}{B25A00}
+\definecolor{mygreen}{HTML}{467E7E}
+\definecolor{mymauve}{HTML}{AC134D}
+
+\definecolor{backred}   {rgb}{1  ,  0.8,  0.8}
+\definecolor{backgreen} {rgb}{0.8,  1  ,  0.8}
+\definecolor{backblue}  {rgb}{0.8,  0.8,  1}
+
+%%%%%%%% COMMENTS %%%%%%%%
+
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+\newcommand{\cucomment}[1]{}
+
+\newcommand{\code}[1]{{\texttt{\textcolor{mygray}{\small #1}}}}
+
+%%%%%%%% CODE LISTINGS %%%%%%%%
+
+\usepackage{listings}
+
+\lstdefinestyle{customc}{
+  language=C,
+  basicstyle=\linespread{0.9}\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  keywordstyle=\bfseries\color{mymauve!70},
+  commentstyle=\itshape\color{mygreen},
+  stringstyle=\color{orange},
+  emph = {add0, add1, add2, add3, map_npt, map_page_wrong, map_page,},
+  emphstyle=\bfseries\color{myblue!90},%
+  deletekeywords={get},
+  escapeinside={<@}{@>},
+  keepspaces=true,
+  otherkeywords={64, uint, ...},
+  tabsize=2,
+}
+
+\lstdefinestyle{customcpp}{%
+    language=C++,
+    backgroundcolor=\color{black!5}, % set backgroundcolor
+    basicstyle=\linespread{0.9}\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    keywordstyle=\bfseries\color{mymauve!70},
+    commentstyle=\itshape\color{mygreen},
+    stringstyle=\color{orange},
+    emph = {add0, add1, add2, add3, map_npt, map_page_wrong, map_page,},
+    emphstyle=\bfseries\color{myblue!90},%
+    deletekeywords={get},
+    escapeinside={<@}{@>},
+    keepspaces=true,
+    otherkeywords={64, uint, ...},
+    tabsize=4,
+}
+
+\lstdefinestyle{customasm}{
+    language=C,
+    belowcaptionskip=1\baselineskip,
+    abovecaptionskip=0pt,
+    aboveskip=0pt,
+    %frame=L,
+    xleftmargin=\parindent,
+    %anguage=Assembler,
+    basicstyle=\footnotesize\ttfamily,
+    commentstyle=\itshape\color{mygreen},
+    keywordstyle=\bfseries\color{myblue!90},%
+    emphstyle=\bfseries\color{myblue!90},%
+    emph = {ld, st,dmb,cbz,ldax,cbnz,stx,cnbz,str,in},
+    escapeinside={<@}{@>},
+    breaklines=true,
+    tabsize=2,
+    boxpos=t,
+    numberstyle=\footnotesize\color{gray}\tt,
+}
+
+%%%%%%%% USEFUL ALIASES FOR MATH %%%%%%%%
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\paren}[1]{\left(#1\right)}
+
+\title[FastAD:\@ C++ Template Library for AD]
+{%
+    FastAD:\@ 
+    Expression Template-Based
+    C++ Library for
+    Fast and Memory-Efficient
+    Automatic Differentiation
+}
+
+\author{James Yang}
+\institute{%
+    Department of Statistics, Stanford University
+    \email{jy2816@stanford.edu}
+}
+\authorrunning{J. Yang}
+
+\begin{document}
+
+% Title slide
+\begin{frame}
+\titlepage
+\end{frame}
+
+% Table of Contents
+\begin{frame}
+\frametitle{Overview}
+\tableofcontents 
+\end{frame}
+
+\input{introduction}
+
+\input{reverse}
+
+\input{fastad}
+
+\input{benchmark}
+
+\input{conclusion}
+
+\begin{frame}[allowframebreaks]
+\frametitle{References}
+\bibliographystyle{splncs04}
+\bibliography{../../references}
+\end{frame}
+
+\end{document}

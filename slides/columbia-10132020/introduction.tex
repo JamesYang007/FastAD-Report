@@ -1,0 +1,76 @@
+\section{Introduction}
+\frame{\tableofcontents[currentsection]}
+
+% motivation
+\begin{frame}
+\frametitle{Applications of AD}
+\begin{itemize}
+\item Modern computational problems require gradient computation.
+\item Application areas:
+    \begin{itemize}
+        \item Optimization
+            \begin{itemize}
+                \item Ex. Sensitivities in ODE integrator~\cite{carpenter:2015}.
+            \end{itemize}
+        \item Statistical inference
+            \begin{itemize}
+                \item Ex. HMC, NUTS during leapfrog~\cite{hoffman:2011}\cite{neal:2012}.
+            \end{itemize}
+        \item Machine learning
+            \begin{itemize}
+                \item Ex. Back-propagation in neural network~\cite{goodfellow:2016}.
+            \end{itemize}
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Traditional Gradient Methods}
+\begin{itemize}
+\item Manually-Written Differentiation
+\item Symbolic Differentiation
+\item Finite-Difference Method
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Motivation for AD}
+\begin{itemize}
+\item Desires:
+    \begin{itemize}
+        \item \emph{Only} specify the function.
+        \item Reuse intermediate values whenever possible.
+        \item Exact \emph{numerical} output with no major precision issues.
+        \item Efficient in both time and space.
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+% AD definition
+\begin{frame}
+\frametitle{Automatic Differentiation}
+\textbf{Automatic Differentiation} (AD) is a generic framework to 
+numerically differentiate a function specified by a program that 
+solves the issues with finite-difference and symbolic differentiation methods.
+\begin{itemize}
+    \item \textbf{forward}-mode
+    \item \textbf{reverse}-mode
+        \begin{itemize}
+            \item Our focus.
+        \end{itemize}
+\end{itemize}
+\end{frame}
+
+% Why reverse mode is good
+\begin{frame}
+\frametitle{Benefits of Reverse-Mode}
+\begin{itemize}
+\item Like Stan Math Library, FastAD is intended for differentiating scalar functions (computing gradients).
+\item Reverse-mode is more efficient than forward-mode for computing gradients~\cite{carpenter:2015}.
+    \begin{itemize}
+        \item Only requires one iteration of reverse-mode algorithm.
+        \item Forward-mode requires $n$ iterations to compute each \emph{partial derivatives}.
+    \end{itemize}
+\item Focus on reverse-mode and computing gradients.
+\end{itemize}
+\end{frame}

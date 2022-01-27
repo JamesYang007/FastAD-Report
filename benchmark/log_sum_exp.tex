@@ -11,20 +11,20 @@
 
 The log-sum-exp function is defined as $f:\R^n \to \R$ 
 where~$f(x) = \log(\sum\limits_{i=1}^n e^{x_i})$,
-The only library supporting a built-in function for log-sum-exp is Stan.
-Fig.\ref{fig:log_sum_exp} shows the benchmark results.
+Fig.~\ref{fig:log_sum_exp} shows the benchmark results.
 
 FastAD outperforms all libraries for all values of $N$.
-The next three fastest libraries are Adept, Stan, and Sacado, respectively.
+The next three fastest libraries are Adept, Stan, and CppAD, respectively.
 The trend stabilizes starting from $N=2^6=64$ where 
-Adept is about $ 3$ times slower than FastAD, 
-Stan about $ 5$ times, and 
-Sacado about $ 17$ times.
-Note that FastAD is only marginally slower than the baseline
+Adept is about $ 2.5$ times slower than FastAD, 
+and Stan about $ 7.7$ times.
+Note that FastAD is only marginally slower than the baseline,
+especially for small to moderate values of $N$,
 despite calls to expensive functions like \code{log} and \code{exp}.
-In fact, FastAD is only $ 1.5$ times slower than the baseline, 
-meaning there is only about $ 50\%$
+In fact, at the largest value of $N = 2^{14}$, 
+FastAD is $ 1.5$ times slower than the baseline, 
+meaning there is about $ 50\%$
 overhead from one forward-evaluation to also compute the gradient.
-This is not surprising since FastAD reuses
-the forward-evaluated result for \code{exp} expression
-during the backward-evaluation (see Section~\ref{ssec:unary}).
+This is because FastAD is optimized such that in this case
+the forward-evaluated result for \code{exp} expression is reused
+during the backward-evaluation.

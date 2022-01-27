@@ -25,22 +25,24 @@ taken from the Stan user guide~\cite{stan-rm:2018}:
 \end{align*}
 The target function is the log of the joint probability density function (up to a constant)
 and we wish to differentiate it with respect to $h_{std}, h, \phi, \sigma, \mu$.
-For this benchmark, we only consider Stan for the same reasons described in Section~\ref{ssec:regression}.
-The fill function for this functor will resize a vector of size $N$ as $\tilde{N} = N + 3$,
-where the first $N/2$ values refer to $h_{std}$,
-the next $N/2$ values refer to $h$,
-and the next three refer to $\phi, \sigma, \mu$, respectively.
-We take care of the edge case where $N < 2$ to let $N = 2$ and then carry out the steps above.
-Here, $y$ is a constant.
-All quantities are randomly generated uniformly in $(-1,1)$ range
-and $\sigma$ is modified afterwards to be strictly positive.
-Fig.\ref{fig:stochastic_volatility} shows the benchmark results.
+Fig.~\ref{fig:stochastic_volatility} shows the benchmark results.
 
-FastAD outperforms Stan by 3 times for the largest $N$.
-The trend seems quite stabilized from the start.
-It is interesting to see that FastAD is only marginally slower than the \code{double} baseline
+FastAD outperforms Adept by $2$ times and Stan by $ 2.6$ times for the largest $N$.
+The trend seems to stabilize starting from $N = 2^{10}$.
+It is interesting to see that FastAD actually performs better than the baseline
 for moderate to large $N$ values.
-The ratio between FastAD time to baseline time is $ 1.07$, which means there is about a $7\%$ overhead 
-just from one \emph{forward-evaluation} to \emph{also} compute the gradient.
-Hence, gradient computation is almost free from just computing the log-pdf,
-which puts FastAD at near-optimal performance.
+For a complicated model as such, there are many opportunities for FastAD to cache certain
+evaluations for constants as mentioned in Section~\ref{ssec:compile-time-opt} 
+and~\ref{ssec:normal_log_pdf}.
+In particular, the exponential function $ e^h$ reuses its forward-evaluated result,
+and many log-pdfs cache the log of its parameters such as 
+$\log(\sigma)$ in the Normal log-pdfs 
+and $\log(\gamma)$ in the Cauchy log-pdfs 
+($\sigma, \gamma$ are the second parameters of their respective distributions, 
+which are constant in this model).
+Note that this caching is automatically done in FastAD, 
+which would be tedious to manually code for the baseline.
+Hence, this shows that due to automatic caching, 
+FastAD forward and backward-evaluation combined 
+can be faster than a manually-written forward evaluation only, 
+which puts FastAD at an optimal performance.

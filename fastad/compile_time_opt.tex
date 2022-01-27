@@ -1,0 +1,58 @@
+\subsection{Other Compile-Time Optimizations}\label{ssec:compile-time-opt}
+
+Using C++17 features, we can make further compile-time optimizations
+that could potentially save tremendous amount of time during run-time.
+
+% choose correct specialization depending on shapes
+
+One example is choosing the correct specialization of an operation
+depending on the shapes of the input.
+As seen in Section~\ref{ssec:vectorization}, all nodes are given a shape trait.
+Depending on the input shapes, one may need to invoke different routines for the same node.
+For example, the normal log-pdf node behaves quite differently
+depending on whether the variance parameter is a scalar $\sigma^2$
+or a (covariance) matrix $\Sigma$.
+Namely, if the variance has a matrix shape,
+we must perform a matrix inverse to compute the log-pdf,
+which requires a different code from the scalar case.
+Using a C++ design pattern called Substitution-Failure-Is-Not-An-Error (SFINAE),
+we can choose the correct routine at compile-time.
+The benefit is that there is no time spent during run-time in choosing the routine anymore,
+whereas in libraries like CppAD, they choose the routines at run-time 
+\emph{for every evaluation} of the node~\cite{bell:2020}.
+
+% sufficient statistic
+
+Another example is detecting constants in an expression. 
+We can optimize a node by saving temporary results when certain inputs are constants,
+which we can check at compile-time using the C++ language feature \code{if constexpr}.
+These results can then be reused in subsequent AD evaluations,
+sometimes changing orders of magnitude of the performance.
+As an example, consider an expression containing a normal log-pdf node for which we differentiate many times.
+Suppose also that the input variables to the node are $x$, an $n$-dimensional vector of constants,
+and $\mu, \sigma$, which are scalar AD variables.
+In general, for every evaluation of the node, the time to forward-evaluate the log-pdf is $O(n)$,
+since we must compute 
+\begin{align*}
+    \log(p(x|\mu, \sigma)) &= -\frac{\sum\limits_{i=1}^n (x_i-\mu)^2}{2\sigma^2} - n\log(\sigma) + C
+\end{align*}
+However, the normal log-pdf node has an opportunity to make a powerful optimization in this particular case.
+Since the normal family defines a two-dimensional exponential family,
+it admits a sufficient statistic $T(x) = \paren{\bar{x}, S^2_n(x)}$ where
+\begin{align*}
+    \bar{x} := \frac{1}{n} \sum\limits_{i=1}^n x_i, \,
+    S_n^2(x) := \frac{1}{n} \sum\limits_{i=1}^n (x_i - \bar{x})^2
+\end{align*}
+Since $x$ is a constant, the sufficient statistic can then be computed \emph{once} and saved for future use.
+The normal log-pdf forward-evaluation now only takes $O(1)$ time given the sufficient statistic,
+as seen in Eq.~\ref{eq:normal_log_pdf_x_const} below,
+\begin{align}
+    \log(p(x|\mu, \sigma)) 
+    &= -\frac{1}{2 \sigma^2} 
+        \sum\limits_{i=1}^n (x_i - \mu)^2 
+        - n\log(\sigma) + C \nonumber \\
+    &= -\frac{n}{2 \sigma^2} 
+        \paren{S_n^2 + (\bar{x} - \mu)^2} 
+        - n\log(\sigma) + C 
+        \label{eq:normal_log_pdf_x_const}
+\end{align}

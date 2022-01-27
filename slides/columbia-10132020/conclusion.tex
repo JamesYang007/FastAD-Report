@@ -1,0 +1,50 @@
+\section{Conclusion}
+\frame{\tableofcontents[currentsection]}
+
+\begin{frame}
+\frametitle{Conclusion}
+\begin{itemize}
+\item FastAD is unique in the following:
+    \begin{itemize}
+        \item More vectorized code.
+        \item Statically stores expression tree.
+        \item Lazy allocation $\implies$ memory efficient.
+        \item More inlined code.
+    \end{itemize}
+\item Performance is superior across many examples.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Limitations}
+\begin{itemize}
+\item No one-size-fits-all solution.
+\item Biggest drawback: compile-time in extremely complicated examples.
+    \begin{itemize}
+        \item Complicated in terms of expression tree.
+        \item Compiles faster than Stan for moderate examples,
+            but have not tried complicated expressions.
+    \end{itemize}
+\item Less general than other frameworks.
+    \begin{itemize}
+        \item Cannot reuse a lot of templated code such as ODE integrators in Boost Library.
+    \end{itemize}
+\item Only optimized for CPU.\@
+\item Best intended for moderate expressions on CPU.\@
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Future Developments}
+\begin{itemize}
+\item Support for GPU.\@
+\item Add more expression nodes:\@
+    \begin{itemize}
+        \item Matrix decompositions
+        \item Log-PDFs
+        \item ODE integrator
+        \item Optimization algorithms
+    \end{itemize}
+\end{itemize}
+\end{frame}
+

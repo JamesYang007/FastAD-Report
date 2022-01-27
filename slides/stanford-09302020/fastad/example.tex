@@ -1,0 +1,50 @@
+\subsection{Example}
+\frame{\tableofcontents[currentsubsection]}
+
+\begin{frame}[fragile]
+\frametitle{Example Code}
+\begin{lstlisting}[style=customcpp]
+    ad::Var<double, ad::vec> x(3); // size is 3
+    auto expr = ad::bind((
+        ad::sin(x[0]) 
+        + ad::cos(x[1]) * x[2] 
+        - ad::log(x[2])
+    ));
+
+    double f = ad::autodiff(expr);
+
+    std::cout << f << std::endl;
+    std::cout << x.get_adj() << std::endl;
+\end{lstlisting}
+
+\begin{itemize}
+    
+\item \code{ad::bind} wraps the lazy allocation strategy.
+
+\item \code{autodiff} is the functional that forward and backward-evaluates.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Example Code: Complex}
+\begin{lstlisting}[style=customcpp]
+    ad::Var<double, ad::mat> X(10, 3);
+    ad::Var<double, ad::vec> w(3);
+    ad::Var<double, ad::scl> s1, s2;
+
+    auto expr = ad::bind((
+        s1 = ad::sum(w),
+        s2 = ad::sum(X),
+        s1*ad::dot(X, w) + ad::sin(s1*s2)*norm(X)
+    ));
+
+    double f = ad::autodiff(expr);
+\end{lstlisting}
+
+\begin{itemize}
+    
+\item Overloaded \code{operator,} to store sequence of expressions at compile-time.
+
+\end{itemize}
+\end{frame}

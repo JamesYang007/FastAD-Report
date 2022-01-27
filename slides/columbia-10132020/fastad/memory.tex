@@ -1,0 +1,193 @@
+\subsection{Memory Management}
+\frame{\tableofcontents[currentsubsection]}
+
+% What do we need to store?
+\begin{frame}
+\frametitle{Memory Management}
+\begin{itemize}
+
+\item{What do we need to store?}
+    \begin{itemize}
+        \item Expression tree
+        \item Values for each node
+        \item Adjoints for each node
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+% Tape and its challenges.
+\begin{frame}
+\frametitle{Typical Implementation: ``Tape''}
+
+\begin{itemize}
+    
+\item Many libraries use a ``tape'' to store all three data structures.
+\item Tape is modified \emph{dynamically}.
+    \begin{itemize}
+        \item Challenges in optimizing memory allocation.
+        \item Stan writes their own pooled-memory allocator.
+            \begin{itemize}
+                \item Faster and amortizes memory overhead, but can still over-allocate in worst-case.
+                \item Each chunk of bytes is doubled from previous chunk.
+            \end{itemize}
+    \end{itemize}
+\item Tape is usually a global object.
+    \begin{itemize}
+        \item Multi-threading may require synchronization.
+        \item Multi-processing may require communication between processes.
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+% FastAD gets rid of the need for tape.
+\begin{frame}
+\frametitle{FastAD Implementation: No Traditional ``Tape''}
+
+\begin{itemize}
+    
+\item Expression tree structure is known at \emph{compile-time}.
+    \begin{itemize}
+        \item Cheap, stack-allocated.
+    \end{itemize}
+
+\item Value and adjoints allocated \emph{locally} per expression
+    and can be managed by the user if needed.
+
+\item Allocates \emph{exact} amount of value and adjoints.
+
+\end{itemize}
+\end{frame}
+
+% How can we avoid saving expression tree?
+\begin{frame}
+\frametitle{Expression Tree}
+\begin{itemize}
+
+\item How do we avoid storing expression tree?
+    \begin{itemize}
+        \item Expression templates.
+    \end{itemize}
+
+\item \textbf{Expression template} is a C++ metaprogramming technique
+    that builds structures representing a computation at compile-time.
+
+\item Ex.\ Let \code{x}, \code{y} be \code{Var<double, scl>}
+    and consider \code{x + y}.
+    \begin{itemize}
+        \item Will not evaluate return an object of type \code{Var<double, scl>}.
+        \item Returns an object of type \code{BinaryNode<Add, Var<double, scl>, Var<double, scl>>}.
+            \begin{itemize}
+                \item No evaluation.
+                \item Cheap object that represents the computation.
+            \end{itemize}
+    \end{itemize}
+
+\item The expression tree structure is ``stored'' in the type of the object!
+
+\end{itemize}
+\end{frame}
+
+% Lazy Allocation
+\begin{frame}
+\frametitle{Values and Adjoints: Lazy Allocation}
+\begin{itemize}
+
+\item \textbf{Key observation}: expression tree does not need to 
+    allocate memory for the values and adjoints at construction.
+
+\item \emph{Only} important that each expression node knows 
+    the total \emph{number} of values and adjoints needed.
+
+\item Memory can be allocated \emph{lazily},
+    \emph{one-time} in a contiguous manner when ready to evaluate.
+
+\end{itemize}
+\end{frame}
+
+% How does fastad implement lazy allocation?
+\begin{frame}[fragile]
+\frametitle{Lazy Allocation Strategy}
+\begin{lstlisting}[style=customcpp]
+Var<double, scl> x1, x2, x3;
+std::vector<double> val_buf, adj_buf;
+
+auto expr = sin(x1) + cos(x2) * x3 - log(x3);
+
+util::SizePack size_pack = expr.<@\textcolor{red}{bind\_cache\_size}@>();
+
+val_buf.resize(size_pack[0]);
+adj_buf.resize(size_pack[1]);
+
+expr.<@\textcolor{red}{bind\_cache}@>({val_buf.data(), adj_buf.data()});
+\end{lstlisting}
+
+\begin{itemize}
+
+\item \textbf{Cache} is the name for memory region for values and adjoints.
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{FastAD Implementation: Lazy Allocation}
+\begin{lstlisting}[style=customcpp]
+util::SizePack bind_cache_size() const { 
+    return single_bind_cache_size() + 
+            expr_.bind_cache_size();
+}
+
+util::SizePack single_bind_cache_size() const {
+    return {this->size(), this->size()};
+}
+\end{lstlisting}
+\begin{itemize}
+    
+\item \code{bind\_cache\_size}: total number of values and adjoints needed for expression.
+    \begin{itemize}
+        \item Recursively call on children.
+        \item Sum return values.
+        \item Add current node's cache size and return.
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{FastAD Implementation: Lazy Allocation}
+\begin{lstlisting}[style=customcpp]
+ptr_pack_t bind_cache(ptr_pack_t begin) { 
+    begin = expr_.bind_cache(begin);
+    return value_adj_view_t::bind(begin);
+}
+\end{lstlisting}
+\begin{itemize}
+
+\item \code{bind\_cache}: makes each node view correct region of cache for its value and adjoints.
+    \begin{itemize}
+        \item No two nodes will view a same region.
+        \item Each node views the same amount they requested in \code{bind\_cache\_size}.
+        \item No memory is wasted and all memory is viewed by some node.
+        \item Order of binding is explicit: left-to-right.
+            \begin{itemize}
+                \item CPU cache hits increased for linear traversals.
+            \end{itemize}
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+% How does it compare with Stan?
+\begin{frame}
+\frametitle{Memory Comparison with Stan}
+\begin{itemize}
+
+\item Stochastic volatility model (Section~\ref{sec:benchmark})
+    with large input ($N = 2^{14}$).
+\item Stan: 4718696 bytes.
+\item FastAD:\ 1836216 bytes.
+\item Stan uses at least 2.5 times more memory than FastAD.\@
+
+\end{itemize}
+\end{frame}

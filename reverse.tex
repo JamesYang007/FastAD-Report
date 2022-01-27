@@ -5,17 +5,13 @@ for context and to motivate the discussion for the next sections.
 For a more in-depth treatment, we direct the readers 
 to~\cite{carpenter:2015}\cite{margossian:2018}\cite{griewank:2008}.
 
-Let us first consider any differentiable target function $f: \R^n \to \R$
-that is composed of elementary functions such as the usual arithmetic operators,
-exp, log, sin, etc.
-Let $x \in \R^n$ be the initial input vector.
-Such a differentiable function $f$ can be represented as an expression graph
-where each node of the graph represents an elementary function.
-For example, consider the function 
+As an example, consider the function 
 \begin{equation}
     f(x_1, x_2, x_3) = \sin(x_1) + \cos(x_2) \cdot x_3 - \log(x_3)
     \label{eq:f-example}
 \end{equation}
+This function can be represented as an expression graph
+where each node of the graph represents a sub-expression.
 Fig.~\ref{fig:expr-example} shows the corresponding expression graph
 drawn to evaluate in the same order as defined by the operator precedence in the C++ standard.
 
@@ -49,7 +45,7 @@ drawn to evaluate in the same order as defined by the operator precedence in the
 
 \end{figure}
 
-Note that in general a variable $x_i$ can be referenced by multiple nodes.
+Note that, in general, a variable $x_i$ can be referenced by multiple nodes.
 For example, $x_3$ is referenced by the \code{*} and \code{log} nodes.
 It is actually more helpful to convert this expression graph into an expression tree
 by replacing all such nodes with multiple parents as separate nodes
@@ -61,7 +57,7 @@ Mathematically,
     g(x_1, x_2, x_3) &= (x_1, x_2, x_3, x_3) \nonumber
 \end{align}
 Fig.~\ref{fig:expr-tree-example} shows the corresponding converted expression tree.
-This way all nodes with the exception of \code{$x_i$} have exactly one parent
+This way all nodes except possibly the \code{$x_i$} nodes have exactly one parent
 and have a unique path back up to the root, if we view the tree as a directed graph.
 While this may seem more complicated than the original expression graph,
 implementation becomes much cleaner with this new approach.
@@ -69,8 +65,7 @@ With the converted expression tree, we will see momentarily that
 we may actually start the algorithm from $w_i$ instead of $x_i$.
 In fact, rather than treating $x_i$ as nodes of the expression graph,
 it is more helpful to instead treat them as containers 
-that hold the initial value and their \emph{adjoints}, 
-i.e.\ $\frac{\partial f}{\partial x_i}$.
+that hold the initial values and their \textbf{adjoints}, $\frac{\partial f}{\partial x_i}$.
 For this reason, we denote the path between $x_i$ and $w_i$ with dotted lines,
 and consider only up to nodes $w_i$ in the expression tree.
 
@@ -111,7 +106,7 @@ and consider only up to nodes $w_i$ in the expression tree.
 \caption{Converted expression tree for Eq.~\ref{eq:f-tree-example}.
          Nodes $x_1, x_2, x_3$ are now separated from the rest of the graph by a layer of $w$ variables.
          Note in particular that $x_3$ is now replaced with $w_3$ and $w_4$ (red boundary).
- }\label{fig:expr-tree-example}
+}\label{fig:expr-tree-example}
 
 \end{figure}
 
@@ -125,23 +120,17 @@ Evaluation of each node will compute the operation that it represents.
 For example, after forward-evaluating the $w_1$ node, 
 which is a trivial operation of retrieving the value from the container $x_1$,
 the \code{sin} node will return~$\sin(w_1) = \sin(x_1)$.
-It is called forward-evaluation because if we unroll the recursive calls,
-we are starting from the leaves of the expression tree
-and moving towards the root to get the full expression value.
 
 The \emph{backward}-evaluation for a given node starts by receiving its adjoint from its parent.
-We will also refer to this value as \emph{seed} to further distinguish $x_i$ from the expression nodes.
+We will also refer to this value as its \emph{seed} to further distinguish $x_i$ from the expression nodes.
 Since the seed is exactly the partial derivative of $f$ with respect to the node,
 the root of the expression tree will receive the value $ \frac{\partial f}{\partial f} = 1$.
-Using this seed, the node computes the correct seed for all its children and 
+Using the seed, the node computes the correct seed for all of its children and 
 backward-evaluates from \emph{right-to-left}, the opposite direction of forward-evaluation.
-This is because in general for a given node, forward-evaluating child $i$ may depend
-on the changed states of children~$1,\ldots,i-1$ subtrees after their forward-evaluation
-(see Section~\ref{ssec:eq} for an example).
 
 The correct seed for each child is computed by a simple chain-rule.
 Assuming the current node is represented by $w \in \R$ and one of its children is $v \in \R$,
-the seed for $v$ is
+the seed for $v$ is the following:
 \begin{align}
     \frac{\partial f}{\partial v} &=
     \frac{df}{dw} \frac{\partial w}{\partial v} \label{eq:next-seed}
@@ -153,18 +142,19 @@ with $w$ as \code{log} and $v$ as $w_4$,
     \frac{\partial w}{\partial v} = \frac{d\log(w_4)}{dw_4} = \frac{1}{w_4}
 \end{align*}
 In general, if $v \in \R^{m \times n}$ and $w \in \R^{p \times q}$, then
-\begin{align*}
+\begin{align}
     \frac{\partial f}{\partial v_{ij}} &=
         \sum\limits_{k=1}^p \sum\limits_{l=1}^q 
         \frac{\partial f}{\partial w_{kl}} \frac{\partial w_{kl}}{\partial v_{ij}}
-\end{align*}
+    \label{eq:next-adj}
+\end{align}
 In particular, the adjoint will always have the same shape and size as the value.
 
-For nodes that have a reference back to the containers $x_i$, i.e.\ $w_1,\ldots,w_4$,
-they must increment the adjoints in the containers with their seed.
-For example, nodes $w_3$ and $w_4$ will take their seed and increment the adjoint for $x_3$.
-This is easily seen by chain-rule again: let~$w_1, \ldots, w_k$ denote all of the variables that have a 
-reference to $x$ and for simplicity assume they are all scalars, 
+For nodes that have references back to the containers $x_i$, i.e.\ $w_1,\ldots,w_4$,
+they must increment the adjoints in the containers with their seeds.
+For example, nodes $w_3$ and $w_4$ will take their seeds and increment the adjoint for $x_3$.
+This is easily seen by chain-rule again: let~$w_1, \ldots, w_k$ denote all of the variables that 
+references $x$ and for simplicity assume they are all scalar, 
 although the result can be easily generalized for multiple dimensions.
 Then,
 \begin{align*}
@@ -175,9 +165,13 @@ Then,
         \frac{\partial f}{\partial w_{i}}
 \end{align*}
 where $\frac{\partial w_i}{\partial x} = 1$ because $w_i$ is simply the identity function with respect to $x$.
-The fully accumulated adjoints for $x_1, x_2, x_3$ is then the gradient of $f$.
+The fully accumulated adjoints for $x_1, x_2, x_3$ form the gradient of $f$.
+
+In general, an expression node can be quite general and 
+is only required to define how to compute its value and 
+the adjoints of its children using Eq.~\ref{eq:next-adj}.
 
 In the general case where $f: \R^n \to \R^m$,
 we can apply this algorithm for the scalar functions $f_j$ for $j = 1,\ldots,m$ and
-save each gradient as a $j$th row of a matrix.
+save each gradient as the $j$th row of a matrix.
 The final matrix is then the Jacobian of $f$.

@@ -1,0 +1,91 @@
+\subsection{Memory Management}\label{ssec:memory}
+
+Most AD systems manage a data structure in memory often referred to as the ``tape''
+to store the sequence of operations via function pointers as well as the node values and adjoints.
+This tape is modified dynamically and requires sophisticated memory management 
+to efficiently reuse memory whenever possible.
+Stan even writes their own custom memory allocator to alleviate memory fragmentation,
+promote data locality, and amortize the cost of memory allocations~\cite{carpenter:2015}.
+However, the memory is not fully contiguous and may still over-allocate.
+For some libraries, on top of memory management of these operations,
+a run-time check must be performed at every evaluation to determine the correct operation~\cite{bell:2020}.
+Others like Stan rely on dynamic polymorphism to look up the vtable to call the correct operation~\cite{carpenter:2015}.
+
+FastAD is unique in that it uses expression templates to represent the sequence of operations
+as a single stack-allocated object.
+By overloading the comma operator, we can chain expressions together into a single object.
+The following is an example of chaining multiple expressions:
+\begin{lstlisting}[style=customcpp]
+auto expr = (
+    x = y * z,                      // expr 1
+    w = x * x + 3 * ad::sin(x + y), // expr 2
+    w + z * x                       // expr 3
+);
+\end{lstlisting}
+Each of the three sub-expressions separated by the commas returns an expression object
+containing the necessary information to perform reverse-AD on their respective structure.
+Those expression objects are then chained by the comma operators to build a final expression object
+that contains the information to perform reverse-AD on all 3 sub-expressions in the order presented.
+This final object is saved into the variable \code{expr}.
+
+Expression template makes it possible to build these expression objects containing the reverse-AD logic.
+Expression template is a template metaprogramming technique that builds complex
+structures representing a computation at compile-time.
+For a full treatment of expression templates, we direct the readers to~\cite{vandevoorde:2002}.
+As an example, in the following case,
+\begin{lstlisting}[style=customcpp]
+Var<double, scl> x, y;
+auto expr = x + y;
+\end{lstlisting}
+\code{x+y} returns a new object of type
+\code{BinaryNode<Add, Var<double, scl>, Var<double, scl>>},
+which represents the addition of two AD variables.
+In particular, this object has member functions that define the logic for
+the forward and backward evaluations of the reverse-mode AD.\@
+This design brings many performance benefits.
+Since the compiler now knows the entire sequence of operations for the expression,
+it allows for the reverse-AD logic to be inlined with no virtual function calls,
+and it removes the need to dynamically manage a separate vector of function pointers.
+Additionally, the expression object is stack-allocated,
+which is cheaper than being heap-allocated,
+and its byte size is proportional to the number of nodes,
+which is relatively small in practice.
+
+We can optimize the memory management even further with another observation:
+an expression can determine the \emph{exact} number of values and adjoints needed to represent all of the nodes.
+If every node can determine this number for itself,
+then any expression tree built using these nodes can determine it as well by induction.
+It is the case that all nodes defined in FastAD can, in fact, determine this number.
+This leads to the idea of \emph{lazy allocation}.
+Lazy allocation refers to allocating memory only when the memory is required by the user.
+In other words, an expression object does not necessarily need to 
+allocate memory for the values and adjoints at construction time,
+since it is only needed later at differentiation time.
+Once an expression is fully built and the user is ready to differentiate it,
+the user can lazily determine this number of values and adjoints by interfacing with the expression object,
+allocate that amount in a contiguous manner,
+and ``bind'' the expression object to use that region of memory.
+This solves the issue with the traditional tape where the values and adjoints are
+not stored in a fully contiguous manner.
+Conveniently, the allocated values and adjoints also do not necessarily 
+need to be stored and managed by a global tape.
+Furthermore, the expression objects can be given additional logic 
+to bind to this region systematically so that the forward and backward evaluations
+will read this memory region almost linearly, which increases cache hits.
+
+While Stan notes that they are more memory-efficient than other popular C++ libraries~\cite{carpenter:2015},
+we noticed a non-negligible difference in memory consumption between Stan and FastAD.
+We took the stochastic volatility example in Section~\ref{ssec:stochastic_volatility},
+and compared the memory allocation in number of bytes.
+For Stan, we took the member variables
+from the tape and computed the number of used bytes.
+We did not take into account other miscellaneous members for simplicity,
+and this estimate serves as a very rough lower bound on the total amount of memory allocated.
+For FastAD, we computed the memory allocated for the values, adjoints, and the expression object.
+Our result shows that Stan uses 4718696 bytes and FastAD uses 1836216 bytes.
+This rough estimate shows that Stan uses at least 2.5 times more memory than FastAD.
+
+With all these optimizations, FastAD removes the need for a global tape by 
+using expression templates to manage the sequence of operations in an expression at compile-time,
+contiguously allocating the exact number of values and adjoints,
+and localizing the memory allocations for each expression.

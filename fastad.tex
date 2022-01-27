@@ -1,38 +1,21 @@
 \section{FastAD Implementation}\label{sec:fastad}
 
-In this section, we cover some of the key ideas of our implementation\footnotemark.
+In this section, we cover a few key ideas of our implementation\footnotemark.
 \footnotetext{github page: https://github.com/JamesYang007/FastAD}
-In Section~\ref{ssec:example}, we first show an example program using FastAD
-differentiating Eq.~\ref{eq:f-example} to get an intuition for how the library works.
-Section~\ref{ssec:motivation} motivates our design choices from a performance perspective, 
-introducing the concepts vectorization, lazy-evaluation, and lazy-allocation and
-describing in detail what these strategies are and
-why they are useful in automatic differentiation.
-Sections~\ref{ssec:value_view}-\ref{ssec:eq} explore the most essential classes
-used to build an expression tree.
-Further, we explore exactly where vectorization, lazy-evaluation, and lazy-allocation occur.
-Finally, Section~\ref{ssec:normal_log_pdf} covers our implementation of
-Normal log-pdf to demonstrate how compile-time optimizations 
-can further maximize performance.
+In Section~\ref{ssec:vectorization},
+we first discuss the benefits of vectorization and the difficulties of integrating it into an AD system.
+We then explain how FastAD fully utilizes vectorization
+and demonstrate that other libraries do not fully take advantage of it. 
+In Section~\ref{ssec:memory},
+we discuss some memory management and performance issues
+stemming from the use of the ``tape'' data structure.
+We then explain how FastAD overcomes these challenges using expression templates
+and a lazy allocation strategy.\@
+Finally, Section~\ref{ssec:compile-time-opt} covers other compile-time optimizations 
+that can further maximize performance.
 
-\input{fastad/example}
+\input{fastad/vectorization}
 
-\input{fastad/motivation}
+\input{fastad/memory}
 
-\input{fastad/value_view}
-
-\input{fastad/value_adj_view}
-
-\input{fastad/var_view}
-
-\input{fastad/var}
-
-\input{fastad/unary}
-
-\input{fastad/binary}
-
-\input{fastad/eq}
-
-\input{fastad/glue}
-
-\input{fastad/normal_log_pdf}
+\input{fastad/compile_time_opt}
