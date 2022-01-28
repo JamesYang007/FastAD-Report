@@ -25,7 +25,11 @@ if [ ! -d "$fastadpath" ]; then
     git clone https://github.com/JamesYang007/FastAD.git
     cd FastAD
     mkdir -p build && cd build
-    cmake -DCMAKE_INSTALL_PREFIX=. -DCMAKE_BUILD_TYPE=Release -DFASTAD_ENABLE_TEST=OFF ..
+    mkdir -p release && cd release
+    cmake \
+        -DCMAKE_INSTALL_PREFIX=.. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DFASTAD_ENABLE_TEST=OFF ../../
     make install
-    cd ../../../ &> /dev/null
+    cd ../../../../ &> /dev/null
 fi
