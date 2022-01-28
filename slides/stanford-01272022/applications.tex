@@ -1,0 +1,61 @@
+\section{Applications}
+\frame{\tableofcontents[currentsection]}
+
+\begin{frame}{Taste of using AD}
+\begin{itemize}
+    \item MLE: Gaussian model.
+    \item MLE: Gaussian mixture model.
+    \item MAP: Ridge.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{MLE: Gaussian model}
+\begin{itemize}
+    \item $X_i \stackrel{iid}{\sim} N(\mu, 1)$ 
+    \item $\mu$ unknown.
+    \item Negative log-pdf is given by
+    \begin{align*}
+        -\sum\limits_{i=1}^n \log(p(x_i))
+        =
+        \frac{1}{2} \sum\limits_{i=1}^n (X_i - \mu)^2
+    \end{align*}
+    \item Example code (\code{mle}).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{MLE: Gaussian mixture model}
+\begin{itemize}
+    \item<2-> This is for you Kevin Senpai.
+    \item<3-> $X_i \stackrel{iid}{\sim} \pi N(\mu_1, \sigma_1^2) + (1-\pi) N(\mu_2, \sigma_2^2)$ 
+    \item<3-> $(\pi, \mu_1, \mu_2, \sigma_1, \sigma_2)$ unknown.
+    \item<3-> Negative log-pdf is given by
+    \begin{align*}
+        -\sum\limits_{i=1}^n \log(p(x_i))
+        =
+        -\sum\limits_{i=1}^n \log\paren{
+            \pi p_{\mu_1, \sigma_1}(X_i)
+            + (1-\pi) p_{\mu_2, \sigma_2}(X_i)
+        }
+    \end{align*}
+    \item<3-> Example code (\code{kevin\_senpai\_mle}).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{MAP: Ridge}
+\begin{itemize}
+    \item MLE is really just MAP of likelihood + non-informative prior.
+    \item In general, can apply any (differentiable) prior.
+    \item Ridge regression (fixed $X$): 
+    \begin{align*}
+        y | \beta &\sim \normal{X\beta, I} \\
+        \beta &\sim \normal{0, \lambda^{-1}}
+    \end{align*}
+    \item MAP is posterior mean:
+    \begin{align*}
+        \EE{\beta | y}
+        &=
+        (X^\top X + \lambda I)^{-1} X^\top y
+    \end{align*}
+    \item Example code (\code{map}).
+\end{itemize} 
+\end{frame}

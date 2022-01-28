@@ -1,0 +1,25 @@
+\section{Benchmarks}
+\frame{\tableofcontents[currentsection]}
+
+\begin{frame}{Comparison with Finite Difference and Manual}
+\begin{itemize}
+    \item Example function: 
+    $x \in \R^p$, $M \in \R^{n\times p}$
+    \begin{align*}
+        f(x) = \text{sum}(Mx) - 2\log(\sum\limits_{i=1}^p \exp{(x_i)})
+    \end{align*}
+\end{itemize} 
+\begin{table}[t]
+    \centering
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{|c||c|c|c|c|}
+        \hline
+        Config & FD & AD & Manual (df only) & Manual (f + df) \\ \hline
+        n=10, p=100 & 2.2e-3 & 5.78e-5 & 3.66e-5 & 4.31e-5 \\ \hline 
+        n=10, p=10000 & NA & 4.3e-3 & 3.4e-3 & 4.1e-3 \\ \hline 
+        n=100, p=10 & 1.1e-4 & 4.2-5 & 9.09e-6 & 1.61e-5 \\ \hline
+        n=10000, p=10 & 8.56e-3 & 2.64e-3 & 3e-4 & 1e-3 \\ \hline
+    \end{tabular}
+    }
+\end{table}
+\end{frame}

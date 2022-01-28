@@ -1,0 +1,35 @@
+\section{Tips}
+\frame{\tableofcontents[currentsection]}
+
+\begin{frame}{Reverse-Mode}
+\begin{itemize}
+    \item Extract common sub-expression into a placeholder variable, 
+    to avoid recomputation, e.g.
+    \begin{align*}
+        t &= x + y \\
+        f(t) &= \sin(t) \cos(t) 
+    \end{align*}
+    \item Use package-provided functions mostly to take advantage of vectorization, e.g.
+    \begin{align*}
+        \text{for-loop sum over } x \, &\text{ \xmark} \\
+        \text{sum}(x) \, &\text{ \cmark} 
+    \end{align*}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reverse-Mode}
+\begin{itemize}
+    \item Minimize number of nodes in computation graph,
+    e.g. if $x \in \R^{10}$,
+    \begin{align*}
+        x[1] + \ldots + x[10] \implies 9 \, \text{ adjoints} \; &\text{ \xmark} \\
+        \text{sum}(x) \; \implies 1 \, \text{ adjoint} \; &\text{ \cmark}
+    \end{align*}
+    \item Minimize size of each node of computation graph,
+    e.g. if $x, y \in \R^n$,
+    \begin{align*}
+        \text{sum}(x+y) \implies O(n) \, \text{memory} \; &\text{ \xmark} \\
+        \text{sum}(x) + \text{sum}(y) \implies O(1) \, \text{memory} \; &\text{ \cmark}
+    \end{align*}
+\end{itemize}
+\end{frame}

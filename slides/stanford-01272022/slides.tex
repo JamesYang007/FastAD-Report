@@ -1,0 +1,109 @@
+\documentclass{beamer} %
+
+%%%BASICS
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+
+%%%START THEME SETTINGS
+\usetheme{Dresden}
+\usecolortheme{beaver}
+\usefonttheme{professionalfonts}
+%%%END THEME SETTINGS
+
+%%%START APA
+\usepackage[british]{babel}
+\usepackage[backend=biber,style=apa]{biblatex}
+\DeclareLanguageMapping{british}{british-apa}
+%% APA citing
+%% \cite{t} - Uthor und Richter, 2010
+%% \textcite{t} - Uthor und Riter (2010)
+%% \parencite{t} - (Uthor & Riter, 2010)
+%% \parencite[Chapt.~4]{t} - (Uthor & Riter, 2010, S. 15)
+%%%END APA
+
+% Math Utils
+\newcommand{\inner}[2]{\langle#1,\,#2\rangle}
+\newcommand{\innerone}[1]{\langle#1\rangle}
+\newcommand{\paren}[1]{\left(#1\right)}
+\newcommand{\bracket}[1]{\left[#1\right]}
+\newcommand{\given}{\biggr\rvert}
+\newcommand{\PP}[1]{\mathbb{P}\paren{#1}}
+\newcommand{\PPB}[1]{\mathbb{P}\bracket{#1}}
+\newcommand{\PPP}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\EE}[1]{\mathbb{E}\paren{#1}}
+\newcommand{\EEB}[1]{\mathbb{E}\bracket{#1}}
+\newcommand{\Tr}[1]{\text{Tr}\paren{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\xeq}[1]{\stackrel{#1}{=}}
+\newcommand{\indist}{\mathcal{D}}
+\newcommand{\inprob}{\mathcal{P}}
+\newcommand{\borel}{\mathcal{B}}
+\newcommand{\indic}[1]{\mathbbm{1}_{#1}}
+\newcommand\restr[2]{{% we make the whole thing an ordinary symbol
+ \left.\kern-\nulldelimiterspace% automatically resize the bar with \right
+ #1 % the function
+ \vphantom{\big|} % pretend it's a little taller at normal size
+ \right|_{#2} % this is the delimiter
+}}
+\newcommand{\im}{\text{Im}}
+\newcommand{\cov}[2]{\text{Cov}\paren{#1,#2}}
+\newcommand{\corr}[2]{\text{Corr}\paren{#1,#2}}
+\newcommand{\var}[1]{\text{Var}\paren{#1}}
+\newcommand{\abs}[1]{\left\lvert#1\right\rvert}
+\newcommand{\norm}[1]{\vert\vert#1\rvert\rvert}
+\newcommand{\grad}{\nabla}
+\newcommand{\varrow}{\overset{\rightharpoonup}}
+\newcommand{\diag}[1]{\text{diag}\paren{#1}}
+\newcommand{\mesh}{\text{mesh}}
+\newcommand{\sgn}[1]{\text{sgn}\paren{#1}}
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\swap}{\operatorname{swap}}
+
+\newcommand{\code}[1]{{\texttt{\textcolor{mygray}{\small #1}}}}
+
+\newcommand{\normal}[1]{\operatorname{\mathcal{N}}\paren{#1}}
+
+\usepackage{amssymb}% http://ctan.org/pkg/amssymb
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+
+% COLORS
+\usepackage{color}
+\usepackage{xcolor}
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+
+\title{Overview of Automatic Differentiation}
+\author{James Yang}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+	\titlepage
+\end{frame}
+
+\begin{frame}
+	\tableofcontents
+\end{frame}
+
+%------------------------------------------------------
+\input{introduction}
+\input{forward}
+\input{reverse}
+\input{tips}
+\input{applications}
+\input{benchmarks}
+
+\end{document}

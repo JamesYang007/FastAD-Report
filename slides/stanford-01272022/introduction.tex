@@ -1,0 +1,93 @@
+\section{Introduction}
+\frame{\tableofcontents[currentsection]}
+
+\begin{frame}{What is Automatic Differentiation (AD)?}
+\begin{itemize}
+    \item Addresses the question: 
+    \emph{How do we write a framework (e.g. Tensorflow, PyTorch)
+    where users can differentiate a wide class of functions automatically?}
+    \item Users \textbf{should not} manually write derivatives.
+    \item Solves issues with other forms of differentiation methods.
+    \item Seppo Linnainmaa (1970) master thesis.
+\end{itemize}  
+\end{frame}
+
+\begin{frame}{Why should we care about computing derivatives?}
+\begin{itemize}
+    \item<1-> Many optimization/statistical methods require the use of gradients.
+    \item Optimizers: gradient descent and all its variants.
+    \item Neural network + back propagation: differentiate loss w.r.t. all parameters.
+    \item Bayesian Hamiltonian Monte Carlo Samplers (HMC, Langevin, NUTS, etc.):
+    differentiate joint-log-pdf of hierarchical model.
+    \item ODE/PDE solvers: differentiate a known function $H$, which is used to specify the dynamics of another variable.
+    \item MLE computation: gradient descent on the (negative) log-likelihood.
+    \item<2-> Your homework: I know you used Wolfram at some point in your life O\_\_O!
+\end{itemize}  
+\end{frame}
+
+\begin{frame}{Finite Difference (FD)}
+\begin{itemize}
+    \item Given $f$ and $x$, compute 
+    \begin{align*}
+        \frac{f(x+h) - f(x)}{h}  
+    \end{align*}
+    for small $h$ and declare it to be $f'(x)$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Finite Difference (FD)}
+\begin{itemize}
+    \item Pros:
+    \begin{itemize}
+        \item Very easy to implement.
+        \item Works for \emph{any} programmable functions.
+    \end{itemize}
+    \item Cons:
+    \begin{itemize}
+        \item Suffers from numerical precision issues (dividing two small numbers leads to wild results) (example code: \code{fd\_prec}).
+        \item Cannot take advantage of analytical forms even if they exist.
+        \item Must run $p$ times if there are $p$ input variables.
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Symbolic Differentiation (SD)}
+\begin{itemize}
+    \item E.g. Wolfram, Mathematica.
+    \item Given a formula or mathematical expression of the function of interest $f$,
+    generate a new expression for the derivative.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Symbolic Differentiation (SD)}
+\begin{itemize}
+    \item Pros:
+    \begin{itemize}
+        \item if $f$ is composed of elementary functions,
+            SD produces the analytical form for $f'$ (no approximations).
+        \item Convenient output for mathematicians who need the functional form.
+    \end{itemize}
+    \item Cons:
+    \begin{itemize}
+        \item Difficult to represent programmatic expressions.
+        \begin{itemize}
+            \item How do we differentiate an if-else statement?
+            \item How do we differentiate a for-loop?
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Automatic Differentiation (AD)}
+\begin{itemize}
+    \item Combines (most of) the Pros and solves the Cons of SD and FD.
+    \item Computes analytical derivatives for \emph{any} (including programmatic) expressions.
+    \item Does not suffer from numerical precision issues as in FD.
+    \item Does not output an expression like SD, but rather the derivative at a given $x$
+    like FD.
+    \begin{itemize}
+        \item Allows for optimization in implementation if it doesn't need to return 
+        the full expression for gradient.
+    \end{itemize}
+\end{itemize}
+\end{frame}
