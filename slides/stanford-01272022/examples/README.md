@@ -11,6 +11,9 @@ The dependencies are:
 - [Eigen-3.3.9](https://eigen.tuxfamily.org/index.php?title=Main_Page)
 - [FastAD](https://github.com/JamesYang007/FastAD)
 
+You will also need to install CMake.
+Follow the download instructions [here](https://cmake.org/install/).
+
 Once the dependencies have been installed, 
 run the following command to build the example code:
 ```

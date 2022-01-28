@@ -51,12 +51,10 @@ Eigen::VectorXd fd(F f, Eigen::VectorXd& x, double h)
 }
 
 template <class F>
-const auto& rv_ad(F f, ad::VarView<double, ad::vec>& x)
+void rv_ad(F f, ad::VarView<double, ad::vec>& x)
 {
     auto expr = ad::bind(f.expr(x));
-    x.reset_adj();
     ad::autodiff(expr);
-    return x.get_adj();
 }
 
 int main(int argc, char **argv)
@@ -100,7 +98,7 @@ int main(int argc, char **argv)
 
     // time rv_ad
     auto begin = std::chrono::steady_clock::now();
-    const auto& rv_ad_res = rv_ad(f, x);
+    rv_ad(f, x);
     auto end = std::chrono::steady_clock::now();
     double rv_ad_time = std::chrono::duration_cast<
         std::chrono::nanoseconds>(end-begin).count() * 1e-9;
@@ -120,7 +118,7 @@ int main(int argc, char **argv)
         std::chrono::nanoseconds>(end-begin).count() * 1e-9;
 
     std::cout << std::setprecision(16) << "FD res: \n" << fd_res << std::endl;
-    std::cout << std::setprecision(16) << "AD res: \n" << rv_ad_res << std::endl;
+    std::cout << std::setprecision(16) << "AD res: \n" << x.get_adj() << std::endl;
     std::cout << std::setprecision(16) << "MA res: \n" << manual_res << std::endl;
     std::cout << "FD (s): " << fd_time << std::endl;
     std::cout << "AD (s): " << rv_ad_time << std::endl;
