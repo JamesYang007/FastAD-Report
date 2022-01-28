@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
     auto expr = ad::bind(
         -ad::normal_adj_log_pdf(y, ad::dot(X, b), 1.0)
-        -ad::normal_adj_log_pdf(b, 0.0, 1./lmda)
+        -ad::normal_adj_log_pdf(b, 0.0, 1./std::sqrt(lmda))
     );
     
     auto resetter = [&]() { b.reset_adj(); };
