@@ -9,7 +9,7 @@ mkdir -p libs
 # install Eigen 3.3
 if [ ! -d "$eigen3path" ]; then
     cd libs &> /dev/null
-    wget https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
+    curl -o eigen-3.3.9.tar.gz https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
     tar xzf eigen-3.3.9.tar.gz
     rm -f eigen-3.3.9.tar.gz
     cd eigen-3.3.9
