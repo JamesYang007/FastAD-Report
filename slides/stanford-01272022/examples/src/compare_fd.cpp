@@ -28,7 +28,9 @@ struct F
     }
 
     auto expr(const ad::VarView<double, ad::vec>& x) const {
-        return ad::sum(ad::dot(M_, x)) - 2.0 * ad::log(ad::sum(ad::exp(x)));
+        return ad::sum( ad::dot(
+                    ad::constant_view<ad::mat>(M_.data(), M_.rows(), M_.cols()), x) ) 
+            - 2.0 * ad::log(ad::sum(ad::exp(x)));
     }
 
 

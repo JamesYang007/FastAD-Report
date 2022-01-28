@@ -8,5 +8,5 @@ cd "$PROJECTDIR"
 mkdir -p build && cd build
 
 rm -rf ./*
-cmake ../ -DCMAKE_BUILD_TYPE=Release "$@"
+cmake ../ "$@" -DCMAKE_BUILD_TYPE=Release
 cmake --build . -- -j6

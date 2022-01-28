@@ -2,17 +2,17 @@
 
 projectdir=$(dirname "BASH_SOURCE")
 fastadpath="libs/FastAD"
-eigen3path="libs/eigen-3.3.9"
+eigen3path="libs/eigen-3.3.7"
 
 mkdir -p libs
 
 # install Eigen 3.3
 if [ ! -d "$eigen3path" ]; then
     cd libs &> /dev/null
-    curl -o eigen-3.3.9.tar.gz https://gitlab.com/libeigen/eigen/-/archive/3.3.9/eigen-3.3.9.tar.gz
-    tar xzf eigen-3.3.9.tar.gz
-    rm -f eigen-3.3.9.tar.gz
-    cd eigen-3.3.9
+    curl -o eigen-3.3.7.tar.gz https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.gz
+    tar xzf eigen-3.3.7.tar.gz
+    rm -f eigen-3.3.7.tar.gz
+    cd eigen-3.3.7
     mkdir -p build && cd build
     cmake .. -DCMAKE_INSTALL_PREFIX="." # installs into build directory
     make install
