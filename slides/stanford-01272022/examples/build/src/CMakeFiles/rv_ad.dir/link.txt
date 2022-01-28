@@ -1,1 +1,0 @@
-/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/rv_ad.dir/rv_ad.cpp.o  -o rv_ad 

@@ -1,1 +1,0 @@
-/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/compare_fd.dir/compare_fd.cpp.o  -o compare_fd 

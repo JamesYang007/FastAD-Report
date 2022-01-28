@@ -1,1 +1,0 @@
-/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/for_each.dir/for_each.cpp.o  -o for_each 

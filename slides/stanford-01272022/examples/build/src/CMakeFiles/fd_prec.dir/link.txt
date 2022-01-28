@@ -1,1 +1,0 @@
-/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/fd_prec.dir/fd_prec.cpp.o  -o fd_prec 
