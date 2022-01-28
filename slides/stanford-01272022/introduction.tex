@@ -44,7 +44,8 @@
     \end{itemize}
     \item Cons:
     \begin{itemize}
-        \item Suffers from numerical precision issues (dividing two small numbers leads to wild results) (example code: \code{fd\_prec}).
+        \item Suffers from numerical precision issues (dividing two small numbers leads to wild results) 
+            (example code: \href{https://github.com/JamesYang007/FastAD-Report/blob/master/slides/stanford-01272022/examples/src/fd_prec.cpp}{\code{fd\_prec}}).
         \item Cannot take advantage of analytical forms even if they exist.
         \item Must run $p$ times if there are $p$ input variables.
     \end{itemize}
